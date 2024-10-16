@@ -61,7 +61,7 @@ pub fn make_trait_castable(args: TokenStream1, input: TokenStream1) -> TokenStre
 
   TokenStream1::from(quote!(
     #input
-    ::trait_cast_rs::make_trait_castable_decl! {
+    make_trait_castable_decl! {
     #item_name => (#args)
   }))
 }
