@@ -42,6 +42,12 @@ impl TraitcastTarget {
   pub const fn target_type_id(&self) -> TypeId {
     self.target_type_id
   }
+
+  /// Returns the type_name of the type to which can be cast with this instance.
+  #[must_use]
+  pub const fn target_type_name(&self) -> &'static str {
+    self.target_type_name
+  }
 }
 
 /// A trait marking a type as being potentially able to traitcast from `dyn TraitcastableAny` to another `dyn Trait`.
@@ -73,7 +79,7 @@ pub unsafe trait TraitcastableAny: Any {
     self
       .traitcast_targets()
       .iter()
-      .find(|possible| possible.target_type_id == target)
+      .find(|possible| {println!("each target: ({:?},{:?})={target:?}", possible.target_type_id, possible.target_type_name);possible.target_type_id == target})
   }
 
   /// Returns the `TypeId` of the concrete type.

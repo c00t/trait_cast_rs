@@ -1,4 +1,4 @@
-#![no_std]
+// #![no_std]
 #![deny(missing_docs)]
 #![warn(clippy::undocumented_unsafe_blocks, clippy::pedantic, clippy::nursery)]
 #![allow(clippy::doc_markdown, clippy::option_if_let_else)]
@@ -52,6 +52,7 @@ Note: No modifications on the *target* traits are necessary. Which allows you to
 # #![feature(ptr_metadata)]
 use trait_cast_rs::{
   make_trait_castable, TraitcastableAny, TraitcastableAnyInfra, TraitcastableAnyInfraExt,
+  make_trait_castable_decl
 };
 #[make_trait_castable(Print)]
 struct Source(i32);

@@ -4,6 +4,7 @@
 #![feature(ptr_metadata)]
 use trait_cast_rs::{
   make_trait_castable, TraitcastableAny, TraitcastableAnyInfra, TraitcastableAnyInfraExt,
+  make_trait_castable_decl
 };
 
 #[make_trait_castable(Dog, Cat)]
