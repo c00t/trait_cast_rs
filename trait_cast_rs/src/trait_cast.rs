@@ -80,10 +80,6 @@ pub unsafe trait TraitcastableAny: Any {
   /// * HashMap
   fn find_traitcast_target(&self, target: crate::UniqueId) -> Option<&TraitcastTarget> {
     self.traitcast_targets().iter().find(|possible| {
-      println!(
-        "each target: ({:?},{:?})={target:?}",
-        possible.target_type_id, possible.target_type_name
-      );
       possible.target_type_id == target
     })
   }
