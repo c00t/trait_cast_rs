@@ -54,16 +54,31 @@ use trait_cast_rs::{
   make_trait_castable, TraitcastableAny, TraitcastableAnyInfra, TraitcastableAnyInfraExt,
   make_trait_castable_decl
 };
-#[make_trait_castable(Print)]
-struct Source(i32);
-trait Print {
-  fn print(&self);
-}
-impl Print for Source {
-  fn print(&self) {
-    println!("{}", self.0)
+
+mod s {
+  use trait_cast_rs::{
+    make_trait_castable, TraitcastableAny, TraitcastableAnyInfra, TraitcastableAnyInfraExt,
+    make_trait_castable_decl, unique_id, UniqueTypeId, UniqueId
+  };
+
+  #[make_trait_castable(Print)]
+  pub struct Source(pub i32);
+  pub trait Print {
+    fn print(&self);
+  }
+  impl Print for Source {
+    fn print(&self) {
+      println!("{}", self.0)
+    }
+  }
+
+  unique_id! {
+    #[UniqueTypeIdType = "u64"]
+    dyn Print
   }
 }
+
+use s::*;
 
 let source = Box::new(Source(5));
 let castable: Box<dyn TraitcastableAny> = source;
@@ -198,7 +213,9 @@ TODO: Remove this section once our last update is 6 years old.
 extern crate alloc;
 
 mod trait_cast;
+mod unique_id;
 pub use trait_cast::*;
+pub use unique_id::*;
 
 mod decl_macro;
 
@@ -207,6 +224,8 @@ mod decl_macro;
 pub use const_sort_rs::ConstSliceSortExt;
 
 pub use trait_cast_impl_rs::make_trait_castable;
+
+pub use trait_cast_impl_rs::unique_id;
 
 #[cfg(test)]
 mod test;

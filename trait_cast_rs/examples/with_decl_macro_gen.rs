@@ -10,6 +10,24 @@ use trait_cast_rs::{make_trait_castable_decl, TraitcastableAny, TraitcastableAny
 make_trait_castable_decl! {
   HybridPet => (Dog<i32>, Dog<TestStruct<::std::primitive::i32>>, Cat<u128, u32>),
 }
+
+use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Dog<i32>
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Dog<TestStruct<::std::primitive::i32>>
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Cat<u128, u32>
+}
+
 struct HybridPet {
   name: String,
 }

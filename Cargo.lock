@@ -36,11 +36,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "2.0.79"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89132cd0bf050864e1d38dc3bbc07a0eb8e7530af26344d3d2bbbef83499f590"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "trait_cast_impl_rs"
 version = "0.2.2"
 dependencies = [
  "proc-macro2",
  "quote",
+ "syn",
  "venial",
 ]
 

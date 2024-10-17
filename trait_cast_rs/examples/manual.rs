@@ -11,6 +11,7 @@ use trait_cast_rs::{
 struct HybridPet {
   name: String,
 }
+
 impl TraitcastableTo<dyn Dog> for HybridPet {
   const METADATA: ::core::ptr::DynMetadata<dyn Dog> = {
     let ptr: *const HybridPet = ::core::ptr::from_raw_parts(::core::ptr::null::<HybridPet>(), ());
@@ -38,6 +39,23 @@ unsafe impl TraitcastableAny for HybridPet {
     TARGETS
   }
 }
+
+unique_id! {
+  #[UniqueTypeIdFile("types.toml")]
+  #[UniqueTypeIdVersion((0,2,0))]
+  dyn Dog
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Cat
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  HybridPet
+}
+
 impl HybridPet {
   fn greet(&self) {
     println!("{}: Hi", self.name)
@@ -62,6 +80,13 @@ trait Cat: TraitcastableAny {
   fn meow(&self);
 }
 trait Mouse {}
+
+use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Mouse
+}
 
 #[cfg_attr(test, test)]
 fn main() {

@@ -35,7 +35,8 @@ trait Cat<T: Display + ?Sized> {
 
 impl<T: Display + 'static> TraitcastableTo<dyn Dog> for HybridPet<T> {
   const METADATA: ::core::ptr::DynMetadata<dyn Dog> = {
-    let ptr: *const HybridPet<T> = ::core::ptr::from_raw_parts(::core::ptr::null::<HybridPet<T>>(), ());
+    let ptr: *const HybridPet<T> =
+      ::core::ptr::from_raw_parts(::core::ptr::null::<HybridPet<T>>(), ());
     let ptr: *const dyn Dog = ptr as _;
 
     ptr.to_raw_parts().1
@@ -46,7 +47,8 @@ impl<T: Display + 'static, V: Display + 'static + ?Sized> TraitcastableTo<dyn Ca
   for HybridPet<T>
 {
   const METADATA: ::core::ptr::DynMetadata<dyn Cat<V>> = {
-    let ptr: *const HybridPet<T> = ::core::ptr::from_raw_parts(::core::ptr::null::<HybridPet<T>>(), ());
+    let ptr: *const HybridPet<T> =
+      ::core::ptr::from_raw_parts(::core::ptr::null::<HybridPet<T>>(), ());
     let ptr: *const dyn Cat<V> = ptr as _;
 
     ptr.to_raw_parts().1
@@ -61,6 +63,57 @@ impl<T: Display + 'static> HybridPet<T> {
     TraitcastTarget::from::<Self, dyn Cat<str>>(),
   ];
 }
+
+// impl unique_type_id::UniqueTypeId<u64> for dyn Dog {
+//   const TYPE_ID: unique_type_id::TypeId<u64> = unique_type_id::TypeId(1);
+
+//   fn id() -> unique_type_id::TypeId<u64> {
+//     todo!()
+//   }
+// }
+
+use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Dog
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Cat<String>
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Cat<str>
+}
+
+// impl unique_type_id::UniqueTypeId<u64> for dyn Cat<str> {
+//   const TYPE_ID: unique_type_id::TypeId<u64> = unique_type_id::TypeId(2);
+//   fn id() -> unique_type_id::TypeId<u64> {
+//     todo!()
+//   }
+// }
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  HybridPet<String>
+}
+
+// impl unique_type_id::UniqueTypeId<u64> for HybridPet<String> {
+//   const TYPE_ID: unique_type_id::TypeId<u64> = unique_type_id::TypeId(3);
+//   fn id() -> unique_type_id::TypeId<u64> {
+//     todo!()
+//   }
+// }
+
+// impl unique_type_id::UniqueTypeId<u64> for dyn Cat<String> {
+//   const TYPE_ID: unique_type_id::TypeId<u64> = unique_type_id::TypeId(4);
+//   fn id() -> unique_type_id::TypeId<u64> {
+//     todo!()
+//   }
+// }
 
 unsafe impl<T: Display + 'static> TraitcastableAny for HybridPet<T> {
   fn traitcast_targets(&self) -> &[TraitcastTarget] {

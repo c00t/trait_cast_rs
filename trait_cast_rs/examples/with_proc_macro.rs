@@ -3,8 +3,8 @@
 #![cfg_attr(feature = "const_sort", feature(const_trait_impl, const_mut_refs))]
 #![feature(ptr_metadata)]
 use trait_cast_rs::{
-  make_trait_castable, TraitcastableAny, TraitcastableAnyInfra, TraitcastableAnyInfraExt,
-  make_trait_castable_decl
+  make_trait_castable, make_trait_castable_decl, TraitcastableAny, TraitcastableAnyInfra,
+  TraitcastableAnyInfraExt,
 };
 
 #[make_trait_castable(Dog, Cat)]
@@ -15,6 +15,18 @@ impl HybridPet {
   fn greet(&self) {
     println!("{}: Hi", self.name)
   }
+}
+
+use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Dog
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Cat
 }
 
 impl Dog for HybridPet {

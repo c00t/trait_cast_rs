@@ -39,6 +39,24 @@ make_trait_castable_decl! {
   HybridPet<String> => (Dog, Cat<str>),
   HybridPet<u8> => (Dog, Cat<u128>),
 }
+
+use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Dog
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Cat<str>
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Cat<u128>
+}
+
 #[cfg_attr(test, test)]
 fn main() {
   // The box is technically not needed but kept for added realism

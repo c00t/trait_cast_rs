@@ -20,6 +20,18 @@ make_trait_castable_decl! {
   // Sunflower => (Flower, Plant)
 }
 
+use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Dog
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Cat
+}
+
 impl HybridPet {
   fn greet(&self) {
     println!("{}: Hi", self.name)

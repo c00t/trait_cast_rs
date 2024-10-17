@@ -51,6 +51,11 @@ macro_rules! make_trait_castable_decl {
         }
         $crate::maybe_impl_bin_search!();
       }
+
+      self::unique_id! {
+        #[UniqueTypeIdType = "u64"]
+        $source;
+      }
     )+
   };
 }

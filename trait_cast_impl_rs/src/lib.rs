@@ -8,6 +8,7 @@ use proc_macro::TokenStream as TokenStream1;
 use proc_macro2::TokenStream;
 use quote::quote;
 use venial::{parse_declaration, Declaration, Error};
+mod unique_id;
 
 /// Attribute macro implementing `TraitcastableAny` for a struct, enum or union.
 ///
@@ -64,4 +65,10 @@ pub fn make_trait_castable(args: TokenStream1, input: TokenStream1) -> TokenStre
     make_trait_castable_decl! {
     #item_name => (#args)
   }))
+}
+
+/// Macro to generate a unique id for a trait object type or a general type
+#[proc_macro]
+pub fn unique_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+  unique_id::unique_id_dyn(input)
 }

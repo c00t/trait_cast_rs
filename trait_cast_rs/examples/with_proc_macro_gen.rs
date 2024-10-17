@@ -5,7 +5,9 @@
 
 use std::any::type_name;
 
-use trait_cast_rs::{make_trait_castable, TraitcastableAny, TraitcastableAnyInfra, make_trait_castable_decl};
+use trait_cast_rs::{
+  make_trait_castable, make_trait_castable_decl, TraitcastableAny, TraitcastableAnyInfra,
+};
 
 #[make_trait_castable(Dog<i32>, Dog<TestStruct<::std::primitive::i32>>, Cat<u128, u32>)]
 struct HybridPet {
@@ -16,6 +18,23 @@ impl HybridPet {
   fn greet(&self) {
     println!("{}: Hi", self.name)
   }
+}
+
+use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Dog<i32>
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Dog<TestStruct<::std::primitive::i32>>
+}
+
+unique_id! {
+  #[UniqueTypeIdType = "u64"]
+  dyn Cat<u128, u32>
 }
 
 impl<T> Dog<T> for HybridPet {
