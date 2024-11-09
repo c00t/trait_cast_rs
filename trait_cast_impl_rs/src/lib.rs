@@ -67,7 +67,51 @@ pub fn make_trait_castable(args: TokenStream1, input: TokenStream1) -> TokenStre
   }))
 }
 
-/// Macro to generate a unique id for a trait object type or a general type
+/// Macro to generate a unique id for a trait object type or a general type.
+///
+/// This macro generates unique type IDs that can be used for type identification and casting.
+/// It supports both trait objects and concrete types, with optional version or file-based uniqueness.
+///
+/// # Examples
+///
+/// Basic usage with trait objects:
+/// ```ignore,no_compile
+/// use trait_cast_rs::unique_id;
+///
+/// unique_id! {
+///     dyn MyTrait
+/// }
+/// ```
+///
+/// With version-based uniqueness (commonly used pattern):
+/// ```ignore,no_compile
+/// use trait_cast_rs::unique_id;
+///
+/// unique_id! {
+///     #[UniqueTypeIdVersion((0,1,0))]
+///     dyn my_crate::api::MyTrait
+/// }
+/// ```
+///
+/// With file-based uniqueness and filename:
+/// ```ignore,no_compile
+/// use trait_cast_rs::unique_id;
+///
+/// unique_id! {
+///     #[UniqueTypeIdFile("ids.toml")]
+///     dyn MyTrait
+/// }
+/// ```
+///
+/// Real-world example from APIs:
+/// ```ignore,no_compile
+/// use trait_cast_rs::unique_id;
+///
+/// unique_id! {
+///     #[UniqueTypeIdVersion((1,0,0))]
+///     dyn bubble_core::api::my_api::MyApi
+/// }
+/// ```
 #[proc_macro]
 pub fn unique_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   unique_id::unique_id_dyn(input)
