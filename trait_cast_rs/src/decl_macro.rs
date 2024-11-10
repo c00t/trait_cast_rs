@@ -53,7 +53,107 @@ macro_rules! make_trait_castable_decl {
       }
 
       self::unique_id! {
-        #[UniqueTypeIdType = "u64"]
+        $source;
+      }
+    )+
+  };
+}
+
+///
+#[macro_export]
+macro_rules! make_trait_castable_decl_random_self_id {
+  ($($source:ty => ($($target:path),* $(,)?)),+$(,)?) => {
+    $(
+      $(
+        impl $crate::TraitcastableTo<dyn $target> for $source
+        {
+          const METADATA: ::core::ptr::DynMetadata<dyn $target> = {
+            let ptr: *const $source = ::core::ptr::from_raw_parts(::core::ptr::null::<$source>(), ());
+            let ptr: *const dyn $target = ptr as _;
+
+            ptr.to_raw_parts().1
+          };
+        }
+      )*
+      // Safety:
+      // All returned `TraitcastTarget` are valid for $source
+      unsafe impl $crate::TraitcastableAny for $source {
+        fn traitcast_targets(&self) -> &[$crate::TraitcastTarget] {
+          #[allow(clippy::unused_unit)]
+          const TARGETS_LEN: usize = {
+            let a:&[()] = &[$({
+              let _: &dyn $target;
+              ()
+            },)*];
+            a.len()
+          };
+          const TARGETS: [$crate::TraitcastTarget; TARGETS_LEN] = {
+            #[allow(unused_mut)]
+            let mut targets : [$crate::TraitcastTarget; TARGETS_LEN] = [
+              $(
+                $crate::TraitcastTarget::from::<$source, dyn $target>(),
+              )*
+            ];
+            $crate::maybe_sort!(targets);
+            targets
+          };
+          &TARGETS
+        }
+        $crate::maybe_impl_bin_search!();
+      }
+
+      self::random_unique_id! {
+        $source;
+      }
+    )+
+  };
+}
+
+///
+#[macro_export]
+macro_rules! make_trait_castable_decl_with_version {
+  ($($source:ty => ($($target:path),* $(,)?) : ($major:literal, $minor:literal, $patch:literal)),+$(,)?) => {
+    $(
+      $(
+        impl $crate::TraitcastableTo<dyn $target> for $source
+        {
+          const METADATA: ::core::ptr::DynMetadata<dyn $target> = {
+            let ptr: *const $source = ::core::ptr::from_raw_parts(::core::ptr::null::<$source>(), ());
+            let ptr: *const dyn $target = ptr as _;
+
+            ptr.to_raw_parts().1
+          };
+        }
+      )*
+      // Safety:
+      // All returned `TraitcastTarget` are valid for $source
+      unsafe impl $crate::TraitcastableAny for $source {
+        fn traitcast_targets(&self) -> &[$crate::TraitcastTarget] {
+          #[allow(clippy::unused_unit)]
+          const TARGETS_LEN: usize = {
+            let a:&[()] = &[$({
+              let _: &dyn $target;
+              ()
+            },)*];
+            a.len()
+          };
+          const TARGETS: [$crate::TraitcastTarget; TARGETS_LEN] = {
+            #[allow(unused_mut)]
+            let mut targets : [$crate::TraitcastTarget; TARGETS_LEN] = [
+              $(
+                $crate::TraitcastTarget::from::<$source, dyn $target>(),
+              )*
+            ];
+            $crate::maybe_sort!(targets);
+            targets
+          };
+          &TARGETS
+        }
+        $crate::maybe_impl_bin_search!();
+      }
+
+      self::unique_id! {
+        #[UniqueTypeIdVersion(( $major, $major, $patch ))]
         $source;
       }
     )+

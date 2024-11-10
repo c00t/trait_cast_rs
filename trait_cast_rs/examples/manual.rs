@@ -47,12 +47,10 @@ unique_id! {
 }
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   dyn Cat
 }
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   HybridPet
 }
 
@@ -84,7 +82,6 @@ trait Mouse {}
 use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   dyn Mouse
 }
 

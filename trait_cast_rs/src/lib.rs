@@ -73,7 +73,6 @@ mod s {
   }
 
   unique_id! {
-    #[UniqueTypeIdType = "u64"]
     dyn Print
   }
 }
@@ -223,9 +222,9 @@ mod decl_macro;
 #[doc(hidden)]
 pub use const_sort_rs::ConstSliceSortExt;
 
-pub use trait_cast_impl_rs::make_trait_castable;
+pub use trait_cast_impl_rs::{make_trait_castable, make_trait_castable_random_self_id};
 
-pub use trait_cast_impl_rs::unique_id;
+pub use trait_cast_impl_rs::{random_unique_id, unique_id, unique_id_without_version_hash};
 
 #[cfg(test)]
 mod test;

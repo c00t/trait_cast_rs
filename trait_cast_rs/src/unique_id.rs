@@ -47,9 +47,16 @@ pub struct UniqueId(pub u64);
 
 /// A trait for providing a type id number.
 pub trait UniqueTypeId {
-  /// A unique id for a type
+  /// A unique id for a type, used by trait_cast to cast trait objects.
+  /// If not equal, trait_cast will fail.
   const TYPE_ID: UniqueId;
+  /// A version for a type, with out pre release, build meta etc.
+  /// Used by trait_cast to check version compatibility. If versions are not compatible, trait_cast will fail.
+  const TYPE_VERSION: (u64, u64, u64);
 
   /// Returns the type id number.
-  fn id() -> UniqueId;
+  fn ty_id() -> UniqueId;
+
+  /// Returns the version for a type
+  fn ty_version() -> (u64, u64, u64);
 }

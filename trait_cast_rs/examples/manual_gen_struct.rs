@@ -75,17 +75,14 @@ impl<T: Display + 'static> HybridPet<T> {
 use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   dyn Dog
 }
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   dyn Cat<String>
 }
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   dyn Cat<str>
 }
 
@@ -97,7 +94,6 @@ unique_id! {
 // }
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   HybridPet<String>
 }
 
@@ -143,5 +139,6 @@ fn main() {
   // Concrete generic `Cat<String>` not specified as a target for `HybridPet<String>`.
   // Adding `TraitcastTarget::from::<Self, dyn Cat<String>>(),` to the targets would make the cast valid.
   let invalid_cast: Option<&dyn Cat<String>> = castable_pet.downcast_ref();
+  eprintln!("{:?}", invalid_cast.is_some());
   assert!(invalid_cast.is_none());
 }

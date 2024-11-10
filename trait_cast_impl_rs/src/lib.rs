@@ -43,6 +43,61 @@ mod unique_id;
 /// ```
 #[proc_macro_attribute]
 pub fn make_trait_castable(args: TokenStream1, input: TokenStream1) -> TokenStream1 {
+  let args_stream = TokenStream::from(args);
+  // Parse the arguments into traits and version
+  let mut args_iter = args_stream.into_iter();
+  let mut traits = Vec::new();
+  let mut version = None;
+  let mut meet_equal = false;
+  // Collect traits until we hit a colon
+  while let Some(token) = args_iter.next() {
+    if token.to_string() == "=" {
+      // Parse version tuple after colon
+      version = Some(args_iter.collect::<TokenStream>());
+      meet_equal = true;
+      // version must be the last arg, so just break
+      break;
+    }
+    traits.push(token);
+  }
+
+  let traits = TokenStream::from_iter(traits);
+  let input = match parse_declaration(input.into()) {
+    Ok(Declaration::Function(fun)) => {
+      return Error::new_at_span(
+        fun.name.span(),
+        "Can not implement `Traitcast` for functions, expected a struct, enum or union definition",
+      )
+      .to_compile_error()
+      .into();
+    },
+    Ok(input) => input,
+    Err(error) => {
+      return error.to_compile_error().into();
+    },
+  };
+  let item_name = input.name();
+
+  if meet_equal {
+    let version = version.unwrap();
+    TokenStream1::from(quote!(
+        #input
+        make_trait_castable_decl_with_version! {
+            #item_name => (#traits) : #version
+        }
+    ))
+  } else {
+    TokenStream1::from(quote!(
+      #input
+      make_trait_castable_decl! {
+      #item_name => (#traits)
+    }))
+  }
+}
+
+///
+#[proc_macro_attribute]
+pub fn make_trait_castable_random_self_id(args: TokenStream1, input: TokenStream1) -> TokenStream1 {
   let args = TokenStream::from(args);
   let input = match parse_declaration(input.into()) {
     Ok(Declaration::Function(fun)) => {
@@ -62,7 +117,7 @@ pub fn make_trait_castable(args: TokenStream1, input: TokenStream1) -> TokenStre
 
   TokenStream1::from(quote!(
     #input
-    make_trait_castable_decl! {
+    make_trait_castable_decl_random_self_id! {
     #item_name => (#args)
   }))
 }
@@ -115,4 +170,18 @@ pub fn make_trait_castable(args: TokenStream1, input: TokenStream1) -> TokenStre
 #[proc_macro]
 pub fn unique_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   unique_id::unique_id_dyn(input)
+}
+
+/// Macro to generate a unique id for a trait object type without version.
+///
+/// For types which version is managed externally, or want to use semantic versioning.
+#[proc_macro]
+pub fn unique_id_without_version_hash(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+  unique_id::unique_id_dyn_without_version_hash_in_type(input)
+}
+
+/// Macro to generate a random unique id.
+#[proc_macro]
+pub fn random_unique_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+  unique_id::random_unique_id_dyn(input)
 }

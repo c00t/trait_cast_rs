@@ -4,7 +4,8 @@
 #![feature(ptr_metadata)]
 
 use trait_cast_rs::{
-  make_trait_castable, make_trait_castable_decl, TraitcastableAny, TraitcastableAnyInfra,
+  make_trait_castable, make_trait_castable_decl, make_trait_castable_decl_with_version,
+  TraitcastableAny, TraitcastableAnyInfra,
 };
 
 #[make_trait_castable(Dog)]
@@ -20,7 +21,6 @@ impl HybridPet {
 use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   dyn Dog
 }
 

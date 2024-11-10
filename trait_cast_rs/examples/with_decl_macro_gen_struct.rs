@@ -43,17 +43,14 @@ make_trait_castable_decl! {
 use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   dyn Dog
 }
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   dyn Cat<str>
 }
 
 unique_id! {
-  #[UniqueTypeIdType = "u64"]
   dyn Cat<u128>
 }
 
