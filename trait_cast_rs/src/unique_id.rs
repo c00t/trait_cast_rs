@@ -40,10 +40,18 @@
 //!}
 //! ```
 
+use core::fmt;
+
 /// A strong type for type id.
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct UniqueId(pub u64);
+
+impl fmt::Display for UniqueId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 /// A trait for providing a type id number.
 pub trait UniqueTypeId {
