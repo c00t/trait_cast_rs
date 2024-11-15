@@ -5,8 +5,7 @@ use quote::quote;
 use rand::prelude::*;
 use std::{fs::File, mem::discriminant};
 use syn::{
-  parse::{Parse, ParseStream},
-  parse_macro_input, Attribute, Expr, GenericArgument, Lit, Meta, MetaNameValue, Result, Token,
+  parse::{Parse, ParseStream}, parse_macro_input, punctuated::Punctuated, Attribute, Expr, GenericArgument, Lit, Meta, MetaNameValue, PathArguments, Result, Token
 };
 
 /// Custom structure to represent `dyn TraitName` and multiple attributes
@@ -80,19 +79,19 @@ impl Parse for DynTraitInput {
 
       // then is a path
       let path: syn::Path = input.parse()?;
-      paths.push(path);
 
       // Optionally parse "::" before generic arguments, when parsed by `syn``
       if input.peek(Token![::]) {
         let _ = input.parse::<Token![::]>();
       }
       // Parse the generics
-      let current_generics = if input.peek(syn::token::Lt) {
-        let angle_bracketed = input.parse::<syn::AngleBracketedGenericArguments>()?;
-        angle_bracketed.args.into_iter().collect()
-      } else {
-        Vec::new()
-      };
+      let current_generics = path.segments.last().and_then(|seg| match &seg.arguments {
+        PathArguments::AngleBracketed(angle_bracketed) => {
+          Some(angle_bracketed.args.clone().into_iter().collect())
+        },
+        _ => None,
+      }).unwrap_or(Vec::new());
+      paths.push(path);
       generics.push(current_generics);
 
       // If there's a comma, continue to the next definition
@@ -102,6 +101,7 @@ impl Parse for DynTraitInput {
         break;
       }
     }
+
     Ok(DynTraitInput {
       file,
       version,
@@ -200,14 +200,15 @@ pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     // path string
     std::hash::Hash::hash(&path_str, &mut hasher);
     // generics
-    let generics = if !ast.generics[index].is_empty() {
-      let gen_params: Vec<_> = ast.generics[index].iter().map(|g| quote! { #g }).collect();
-      quote! { <#(#gen_params),*> }
-    } else {
-      quote! {}
-    };
-    let generic_str = format!("{}", generics);
-    std::hash::Hash::hash(&generic_str, &mut hasher);
+    // let generics = if !ast.generics[index].is_empty() {
+    //   let gen_params: Vec<_> = ast.generics[index].iter().map(|g| quote! { #g }).collect();
+    //   quote! { <#(#gen_params),*> }
+    // } else {
+    //   quote! {}
+    // };
+    // let generic_str = format!("{}", generics);
+    // std::hash::Hash::hash(&generic_str, &mut hasher);
+    
     // version
     std::hash::Hash::hash(&ast.version, &mut hasher);
     let hash = std::hash::Hasher::finish(&hasher);
@@ -218,9 +219,15 @@ pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let patch = ast.version.2;
 
     let implementation = quote! {
-        impl self::UniqueTypeId for #is_dyn #path #generics {
+        impl self::UniqueTypeId for #is_dyn #path {
+            const TYPE_NAME: &'static str = #path_str;
             const TYPE_ID: self::UniqueId = self::UniqueId(#hash as #id_type);
             const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
+
+
+            fn ty_name() -> &'static str {
+                Self::TYPE_NAME
+            }
 
             fn ty_id() -> self::UniqueId {
                 Self::TYPE_ID
@@ -273,13 +280,13 @@ pub fn unique_id_dyn_without_version_hash_in_type(
     };
     std::hash::Hash::hash(&is_dyn.to_string(), &mut hasher);
     std::hash::Hash::hash(&path_str, &mut hasher);
-    let generics = if !ast.generics[index].is_empty() {
-      let gen_params: Vec<_> = ast.generics[index].iter().map(|g| quote! { #g }).collect();
-      quote! { <#(#gen_params),*> }
-    } else {
-      quote! {}
-    };
-    std::hash::Hash::hash(&generics.to_string(), &mut hasher);
+    // let generics = if !ast.generics[index].is_empty() {
+    //   let gen_params: Vec<_> = ast.generics[index].iter().map(|g| quote! { #g }).collect();
+    //   quote! { <#(#gen_params),*> }
+    // } else {
+    //   quote! {}
+    // };
+    // std::hash::Hash::hash(&generics.to_string(), &mut hasher);
     // std::hash::Hash::hash(&ast.version, &mut hasher);
     let hash = std::hash::Hasher::finish(&hasher);
     hashes.push(hash);
@@ -288,9 +295,13 @@ pub fn unique_id_dyn_without_version_hash_in_type(
     let minor = ast.version.1;
     let patch = ast.version.2;
     let implementation = quote! {
-        impl self::UniqueTypeId for #is_dyn #path #generics {
+        impl self::UniqueTypeId for #is_dyn #path {
+            const TYPE_NAME: &'static str = #path_str;
             const TYPE_ID: self::UniqueId = self::UniqueId(#hash as #id_type);
             const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
+            fn ty_name() -> &'static str {
+                Self::TYPE_NAME
+            }
             fn ty_id() -> self::UniqueId {
                 Self::TYPE_ID
             }
@@ -333,33 +344,37 @@ pub fn random_unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::Token
     let (_prefix_path, path) = path_to_prefix_path(path);
     // Hash the name and version to a u64
     names.push(path_str.clone());
-    let mut hasher = std::hash::DefaultHasher::new();
+    // let mut hasher = std::hash::DefaultHasher::new();
     let is_dyn = if ast.is_dyn[index] {
       quote! { dyn }
     } else {
       quote! {}
     };
-    std::hash::Hash::hash(&is_dyn.to_string(), &mut hasher);
-    std::hash::Hash::hash(&path_str, &mut hasher);
-    let generics = if !ast.generics[index].is_empty() {
-      let gen_params: Vec<_> = ast.generics[index].iter().map(|g| quote! { #g }).collect();
-      quote! { <#(#gen_params),*> }
-    } else {
-      quote! {}
-    };
-    std::hash::Hash::hash(&generics.to_string(), &mut hasher);
-    // std::hash::Hash::hash(&ast.version, &mut hasher);
-    let hash = std::hash::Hasher::finish(&hasher);
-    hashes.push(hash);
+    // std::hash::Hash::hash(&is_dyn.to_string(), &mut hasher);
+    // std::hash::Hash::hash(&path_str, &mut hasher);
+    // let generics = if !ast.generics[index].is_empty() {
+    //   let gen_params: Vec<_> = ast.generics[index].iter().map(|g| quote! { #g }).collect();
+    //   quote! { <#(#gen_params),*> }
+    // } else {
+    //   quote! {}
+    // };
+    // std::hash::Hash::hash(&generics.to_string(), &mut hasher);
+    // // std::hash::Hash::hash(&ast.version, &mut hasher);
+    // let hash = std::hash::Hasher::finish(&hasher);
     let hash: u64 = random();
+    hashes.push(hash);
 
     let major = ast.version.0;
     let minor = ast.version.1;
     let patch = ast.version.2;
     let implementation = quote! {
-        impl self::UniqueTypeId for #is_dyn #path #generics {
+        impl self::UniqueTypeId for #is_dyn #path {
+            const TYPE_NAME: &'static str = #path_str;
             const TYPE_ID: self::UniqueId = self::UniqueId(#hash as #id_type);
             const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
+            fn ty_name() -> &'static str {
+                Self::TYPE_NAME
+            }
             fn ty_id() -> self::UniqueId {
                 Self::TYPE_ID
             }

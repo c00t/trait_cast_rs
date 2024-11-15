@@ -38,7 +38,7 @@ impl TraitcastTarget {
     Self {
       target_type_id: Target::TYPE_ID,
       target_type_version: Target::TYPE_VERSION,
-      target_type_name: type_name::<Target>(),
+      target_type_name: Target::TYPE_NAME,
       metadata: (&Src::METADATA as *const core::ptr::DynMetadata<Target>).cast::<()>(),
     }
   }

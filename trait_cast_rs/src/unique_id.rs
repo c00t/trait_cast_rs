@@ -55,12 +55,17 @@ impl fmt::Display for UniqueId {
 
 /// A trait for providing a type id number.
 pub trait UniqueTypeId {
+  /// The type name defined by the user, more unique and stable name than the [`core::any::type_name`]
+  const TYPE_NAME: &'static str;
   /// A unique id for a type, used by trait_cast to cast trait objects.
   /// If not equal, trait_cast will fail.
   const TYPE_ID: UniqueId;
   /// A version for a type, with out pre release, build meta etc.
   /// Used by trait_cast to check version compatibility. If versions are not compatible, trait_cast will fail.
   const TYPE_VERSION: (u64, u64, u64);
+
+  /// Returns the type name.
+  fn ty_name() -> &'static str;
 
   /// Returns the type id number.
   fn ty_id() -> UniqueId;
