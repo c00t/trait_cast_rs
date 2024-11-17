@@ -8,7 +8,8 @@ use syn::{
   parse::{Parse, ParseStream},
   parse_macro_input,
   punctuated::Punctuated,
-  Attribute, Expr, GenericArgument, Lit, Meta, MetaNameValue, PathArguments, Result, Token,
+  Attribute, Expr, ExprReference, GenericArgument, Lit, Meta, MetaNameValue, PathArguments, Result,
+  Token,
 };
 
 /// Custom structure to represent `dyn TraitName` and multiple attributes
@@ -20,6 +21,14 @@ struct DynTraitInput {
   /// current generics is always empty, because that is parsed to [`Self::paths`]
   generics: Vec<Vec<GenericArgument>>,
   is_dyn: Vec<bool>,
+  ref_type: Vec<RefType>,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum RefType {
+  None,
+  Shared,
+  Mutable,
 }
 
 impl Parse for DynTraitInput {
@@ -83,14 +92,38 @@ impl Parse for DynTraitInput {
     let mut paths = Vec::new();
     let mut generics = Vec::new();
     let mut is_dyn = Vec::new();
+    let mut ref_type = Vec::new();
     // Parse multiple definitions
     while !input.is_empty() {
       // Check if it's a dyn trait
       let is_dyn_current = input.parse::<Token![dyn]>().is_ok();
       is_dyn.push(is_dyn_current);
 
-      // then is a path
-      let path: syn::Path = input.parse()?;
+      // then is a path or a reference
+      let path = if input.peek(Token![&]) {
+        // try to parse the reference type
+        let reference_path = input.parse::<ExprReference>();
+        if let Ok(syn::ExprReference {
+          expr, mutability, ..
+        }) = reference_path
+        {
+          if mutability.is_none() {
+            ref_type.push(RefType::Shared);
+          } else {
+            ref_type.push(RefType::Mutable);
+          }
+          if let syn::Expr::Path(expr_path) = &*expr {
+            expr_path.path.clone()
+          } else {
+            panic!("Expected a path after &");
+          }
+        } else {
+          panic!("Expected a reference after &");
+        }
+      } else {
+        ref_type.push(RefType::None);
+        input.parse()?
+      };
 
       // Optionally parse "::" before generic arguments, when parsed by `syn``
       if input.peek(Token![::]) {
@@ -125,6 +158,7 @@ impl Parse for DynTraitInput {
       paths,
       generics,
       is_dyn,
+      ref_type,
     })
   }
 }
@@ -188,8 +222,35 @@ fn path_to_prefix_path(path: &syn::Path) -> (syn::Path, syn::Path) {
   (prefix, name)
 }
 
-fn path_to_string(path: &syn::Path) -> String {
-  format!("{}", quote!(#path))
+fn path_to_string(ref_type: RefType, is_dyn: bool, path: &syn::Path) -> String {
+  let ref_str = match ref_type {
+    RefType::None => "",
+    RefType::Shared => "&",
+    RefType::Mutable => "&mut",
+  };
+  let is_dyn_str = if is_dyn { "dyn" } else { "" };
+  let path_str = format! {"{}", quote!(#path)}.replace(" ", "");
+  format!("{} {} {}", ref_str, is_dyn_str, path_str)
+    .trim()
+    .to_string()
+}
+
+fn path_to_token_stream(
+  ref_type: RefType,
+  is_dyn: bool,
+  path: &syn::Path,
+) -> proc_macro2::TokenStream {
+  let ref_type = match ref_type {
+    RefType::None => quote! {},
+    RefType::Shared => quote! { & },
+    RefType::Mutable => quote! { &mut },
+  };
+  let is_dyn = if is_dyn {
+    quote! { dyn }
+  } else {
+    quote! {}
+  };
+  quote! { #ref_type #is_dyn #path }
 }
 
 pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -203,17 +264,13 @@ pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
   let mut hashes = vec![];
 
   for (index, path) in ast.paths.iter().enumerate() {
-    let path_str = path_to_string(path);
+    let path_str = path_to_string(ast.ref_type[index], ast.is_dyn[index], path);
     let (_prefix_path, path) = path_to_prefix_path(path);
+    let type_token_stream = path_to_token_stream(ast.ref_type[index], ast.is_dyn[index], &path);
     // Hash the name and version to a u64
     names.push(path_str.clone());
     let mut hasher = std::hash::DefaultHasher::new();
-    let is_dyn = if ast.is_dyn[index] {
-      quote! { dyn }
-    } else {
-      quote! {}
-    };
-    std::hash::Hash::hash(&is_dyn.to_string(), &mut hasher);
+
     // path string
     std::hash::Hash::hash(&path_str, &mut hasher);
     // generics
@@ -244,42 +301,41 @@ pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
       let type_id_equal_to_ident =
         Ident::new(type_id_equal_to, path.segments.last().unwrap().ident.span());
       quote! {
-        impl self::UniqueTypeId for #is_dyn #path {
+        impl self::UniqueTypeId for #type_token_stream {
             const TYPE_NAME: &'static str = #path_str;
             const TYPE_ID: self::UniqueId = <#type_id_equal_to_ident as self::UniqueTypeId>::TYPE_ID;
             const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
 
 
-            fn ty_name() -> &'static str {
+            fn ty_name(&self) -> &'static str {
                 Self::TYPE_NAME
             }
 
-            fn ty_id() -> self::UniqueId {
+            fn ty_id(&self) -> self::UniqueId {
                 Self::TYPE_ID
             }
 
-            fn ty_version() -> (u64, u64, u64) {
+            fn ty_version(&self) -> (u64, u64, u64) {
                 Self::TYPE_VERSION
             }
         }
       }
     } else {
       quote! {
-          impl self::UniqueTypeId for #is_dyn #path {
+          impl self::UniqueTypeId for #type_token_stream {
               const TYPE_NAME: &'static str = #path_str;
               const TYPE_ID: self::UniqueId = self::UniqueId(#hash as #id_type);
               const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
 
-
-              fn ty_name() -> &'static str {
+              fn ty_name(&self) -> &'static str {
                   Self::TYPE_NAME
               }
 
-              fn ty_id() -> self::UniqueId {
+              fn ty_id(&self) -> self::UniqueId {
                   Self::TYPE_ID
               }
 
-              fn ty_version() -> (u64, u64, u64) {
+              fn ty_version(&self) -> (u64, u64, u64) {
                   Self::TYPE_VERSION
               }
           }
@@ -315,17 +371,13 @@ pub fn unique_id_dyn_without_version_hash_in_type(
   let mut hashes = vec![];
 
   for (index, path) in ast.paths.iter().enumerate() {
-    let path_str = path_to_string(path);
+    let path_str = path_to_string(ast.ref_type[index], ast.is_dyn[index], path);
     let (_prefix_path, path) = path_to_prefix_path(path);
+    let type_token_stream = path_to_token_stream(ast.ref_type[index], ast.is_dyn[index], &path);
     // Hash the name and version to a u64
     names.push(path_str.clone());
     let mut hasher = std::hash::DefaultHasher::new();
-    let is_dyn = if ast.is_dyn[index] {
-      quote! { dyn }
-    } else {
-      quote! {}
-    };
-    std::hash::Hash::hash(&is_dyn.to_string(), &mut hasher);
+
     std::hash::Hash::hash(&path_str, &mut hasher);
     // let generics = if !ast.generics[index].is_empty() {
     //   let gen_params: Vec<_> = ast.generics[index].iter().map(|g| quote! { #g }).collect();
@@ -350,37 +402,37 @@ pub fn unique_id_dyn_without_version_hash_in_type(
       let type_id_equal_to_ident =
         Ident::new(type_id_equal_to, path.segments.last().unwrap().ident.span());
       quote! {
-        impl self::UniqueTypeId for #is_dyn #path {
+        impl self::UniqueTypeId for #type_token_stream {
             const TYPE_NAME: &'static str = #path_str;
             const TYPE_ID: self::UniqueId = <#type_id_equal_to_ident as self::UniqueTypeId>::TYPE_ID;
             const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
 
-            fn ty_name() -> &'static str {
+            fn ty_name(&self) -> &'static str {
                 Self::TYPE_NAME
             }
 
-            fn ty_id() -> self::UniqueId {
+            fn ty_id(&self) -> self::UniqueId {
                 Self::TYPE_ID
             }
 
-            fn ty_version() -> (u64, u64, u64) {
+            fn ty_version(&self) -> (u64, u64, u64) {
                 Self::TYPE_VERSION
             }
         }
       }
     } else {
       quote! {
-          impl self::UniqueTypeId for #is_dyn #path {
+          impl self::UniqueTypeId for #type_token_stream {
               const TYPE_NAME: &'static str = #path_str;
               const TYPE_ID: self::UniqueId = self::UniqueId(#hash as #id_type);
               const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
-              fn ty_name() -> &'static str {
+              fn ty_name(&self) -> &'static str {
                   Self::TYPE_NAME
               }
-              fn ty_id() -> self::UniqueId {
+              fn ty_id(&self) -> self::UniqueId {
                   Self::TYPE_ID
               }
-              fn ty_version() -> (u64, u64, u64) {
+              fn ty_version(&self) -> (u64, u64, u64) {
                   Self::TYPE_VERSION
               }
           }
@@ -416,27 +468,11 @@ pub fn random_unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::Token
   let mut hashes = vec![];
 
   for (index, path) in ast.paths.iter().enumerate() {
-    let path_str = path_to_string(path);
+    let path_str = path_to_string(ast.ref_type[index], ast.is_dyn[index], path);
     let (_prefix_path, path) = path_to_prefix_path(path);
+    let type_token_stream = path_to_token_stream(ast.ref_type[index], ast.is_dyn[index], &path);
     // Hash the name and version to a u64
     names.push(path_str.clone());
-    // let mut hasher = std::hash::DefaultHasher::new();
-    let is_dyn = if ast.is_dyn[index] {
-      quote! { dyn }
-    } else {
-      quote! {}
-    };
-    // std::hash::Hash::hash(&is_dyn.to_string(), &mut hasher);
-    // std::hash::Hash::hash(&path_str, &mut hasher);
-    // let generics = if !ast.generics[index].is_empty() {
-    //   let gen_params: Vec<_> = ast.generics[index].iter().map(|g| quote! { #g }).collect();
-    //   quote! { <#(#gen_params),*> }
-    // } else {
-    //   quote! {}
-    // };
-    // std::hash::Hash::hash(&generics.to_string(), &mut hasher);
-    // // std::hash::Hash::hash(&ast.version, &mut hasher);
-    // let hash = std::hash::Hasher::finish(&hasher);
     let hash: u64 = random();
     hashes.push(hash);
 
@@ -444,17 +480,17 @@ pub fn random_unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::Token
     let minor = ast.version.1;
     let patch = ast.version.2;
     let implementation = quote! {
-        impl self::UniqueTypeId for #is_dyn #path {
+        impl self::UniqueTypeId for #type_token_stream {
             const TYPE_NAME: &'static str = #path_str;
             const TYPE_ID: self::UniqueId = self::UniqueId(#hash as #id_type);
             const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
-            fn ty_name() -> &'static str {
+            fn ty_name(&self) -> &'static str {
                 Self::TYPE_NAME
             }
-            fn ty_id() -> self::UniqueId {
+            fn ty_id(&self) -> self::UniqueId {
                 Self::TYPE_ID
             }
-            fn ty_version() -> (u64, u64, u64) {
+            fn ty_version(&self) -> (u64, u64, u64) {
                 Self::TYPE_VERSION
             }
         }

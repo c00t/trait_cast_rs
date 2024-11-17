@@ -67,13 +67,13 @@ pub trait UniqueTypeId {
   const TYPE_VERSION: (u64, u64, u64);
 
   /// Returns the type name.
-  fn ty_name() -> &'static str;
+  fn ty_name(&self) -> &'static str;
 
   /// Returns the type id number.
-  fn ty_id() -> UniqueId;
+  fn ty_id(&self) -> UniqueId;
 
   /// Returns the version for a type
-  fn ty_version() -> (u64, u64, u64);
+  fn ty_version(&self) -> (u64, u64, u64);
 }
 
 // implement the trait for primitive types in prelude
@@ -92,6 +92,7 @@ unique_id_without_version_hash! {
   char;
   String;
   str;
+  &str;
 }
 
 // implement the trait for optional types of primitive types in prelude
@@ -148,8 +149,8 @@ mod tests {
       A<u8>;
       A<u16>;
     }
-    assert_eq!(<A<u8> as UniqueTypeId>::TYPE_NAME, "A < u8 >");
-    assert_eq!(<A<u16> as UniqueTypeId>::TYPE_NAME, "A < u16 >");
+    assert_eq!(<A<u8> as UniqueTypeId>::TYPE_NAME, "A<u8>");
+    assert_eq!(<A<u16> as UniqueTypeId>::TYPE_NAME, "A<u16>");
     assert_ne!(
       <A<u8> as UniqueTypeId>::TYPE_ID,
       <A<u16> as UniqueTypeId>::TYPE_ID
@@ -160,5 +161,10 @@ mod tests {
     );
     assert_eq!(<A<u8> as UniqueTypeId>::TYPE_VERSION, (0, 0, 0));
     assert_eq!(<A<u16> as UniqueTypeId>::TYPE_VERSION, (0, 0, 0));
+    let x = "xf";
+    fn f<T: UniqueTypeId>(x: T) {
+      assert_eq!(x.ty_id(), <T as UniqueTypeId>::TYPE_ID);
+    }
+    f(x);
   }
 }

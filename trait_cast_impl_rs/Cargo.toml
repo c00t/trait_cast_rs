@@ -22,5 +22,5 @@ proc-macro = true
 proc-macro2 = { version = "1.0", features = ["nightly"] }
 venial = "0.5.0"
 quote = "1.0.21"
-syn = {version = "2" }
+syn = {version = "2", features = ["full"]}
 rand = "0.8.5"
