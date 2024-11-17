@@ -306,15 +306,17 @@ pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             const TYPE_ID: self::UniqueId = <#type_id_equal_to_ident as self::UniqueTypeId>::TYPE_ID;
             const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
 
-
+            #[inline]
             fn ty_name(&self) -> &'static str {
                 Self::TYPE_NAME
             }
 
+            #[inline]
             fn ty_id(&self) -> self::UniqueId {
                 Self::TYPE_ID
             }
 
+            #[inline]
             fn ty_version(&self) -> (u64, u64, u64) {
                 Self::TYPE_VERSION
             }
@@ -327,14 +329,17 @@ pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
               const TYPE_ID: self::UniqueId = self::UniqueId(#hash as #id_type);
               const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
 
+              #[inline]
               fn ty_name(&self) -> &'static str {
                   Self::TYPE_NAME
               }
 
+              #[inline]
               fn ty_id(&self) -> self::UniqueId {
                   Self::TYPE_ID
               }
 
+              #[inline]
               fn ty_version(&self) -> (u64, u64, u64) {
                   Self::TYPE_VERSION
               }
@@ -407,14 +412,17 @@ pub fn unique_id_dyn_without_version_hash_in_type(
             const TYPE_ID: self::UniqueId = <#type_id_equal_to_ident as self::UniqueTypeId>::TYPE_ID;
             const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
 
+            #[inline]
             fn ty_name(&self) -> &'static str {
                 Self::TYPE_NAME
             }
 
+            #[inline]
             fn ty_id(&self) -> self::UniqueId {
                 Self::TYPE_ID
             }
 
+            #[inline]
             fn ty_version(&self) -> (u64, u64, u64) {
                 Self::TYPE_VERSION
             }
@@ -426,12 +434,18 @@ pub fn unique_id_dyn_without_version_hash_in_type(
               const TYPE_NAME: &'static str = #path_str;
               const TYPE_ID: self::UniqueId = self::UniqueId(#hash as #id_type);
               const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
+
+              #[inline]
               fn ty_name(&self) -> &'static str {
                   Self::TYPE_NAME
               }
+
+              #[inline]
               fn ty_id(&self) -> self::UniqueId {
                   Self::TYPE_ID
               }
+
+              #[inline]
               fn ty_version(&self) -> (u64, u64, u64) {
                   Self::TYPE_VERSION
               }
@@ -484,12 +498,18 @@ pub fn random_unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::Token
             const TYPE_NAME: &'static str = #path_str;
             const TYPE_ID: self::UniqueId = self::UniqueId(#hash as #id_type);
             const TYPE_VERSION: (u64, u64, u64) = (#major, #minor, #patch);
+
+            #[inline]
             fn ty_name(&self) -> &'static str {
                 Self::TYPE_NAME
             }
+
+            #[inline]
             fn ty_id(&self) -> self::UniqueId {
                 Self::TYPE_ID
             }
+
+            #[inline]
             fn ty_version(&self) -> (u64, u64, u64) {
                 Self::TYPE_VERSION
             }
