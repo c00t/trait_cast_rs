@@ -264,7 +264,7 @@ pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
   let mut hashes = vec![];
 
   for (index, path) in ast.paths.iter().enumerate() {
-    let path_str = path_to_string(ast.ref_type[index], ast.is_dyn[index], path);
+    let mut path_str = path_to_string(ast.ref_type[index], ast.is_dyn[index], path);
     let (_prefix_path, path) = path_to_prefix_path(path);
     let type_token_stream = path_to_token_stream(ast.ref_type[index], ast.is_dyn[index], &path);
     // Hash the name and version to a u64
@@ -286,6 +286,12 @@ pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     // version
     std::hash::Hash::hash(&ast.version, &mut hasher);
     let mut hash = std::hash::Hasher::finish(&hasher);
+    if cfg!(feature = "erase_name") {
+      let mut hasher = std::hash::DefaultHasher::new();
+      std::hash::Hash::hash(&path_str, &mut hasher);
+      let path_str_hash = std::hash::Hasher::finish(&hasher);
+      path_str = format!("{}", path_str_hash);
+    }
     if let Some(_) = ast.type_id_equal_to {
       // store 0u64
       hash = 0;
@@ -376,7 +382,7 @@ pub fn unique_id_dyn_without_version_hash_in_type(
   let mut hashes = vec![];
 
   for (index, path) in ast.paths.iter().enumerate() {
-    let path_str = path_to_string(ast.ref_type[index], ast.is_dyn[index], path);
+    let mut path_str = path_to_string(ast.ref_type[index], ast.is_dyn[index], path);
     let (_prefix_path, path) = path_to_prefix_path(path);
     let type_token_stream = path_to_token_stream(ast.ref_type[index], ast.is_dyn[index], &path);
     // Hash the name and version to a u64
@@ -393,6 +399,12 @@ pub fn unique_id_dyn_without_version_hash_in_type(
     // std::hash::Hash::hash(&generics.to_string(), &mut hasher);
     // std::hash::Hash::hash(&ast.version, &mut hasher);
     let mut hash = std::hash::Hasher::finish(&hasher);
+    if cfg!(feature = "erase_name") {
+      let mut hasher = std::hash::DefaultHasher::new();
+      std::hash::Hash::hash(&path_str, &mut hasher);
+      let path_str_hash = std::hash::Hasher::finish(&hasher);
+      path_str = format!("{}", path_str_hash);
+    }
     if let Some(_) = ast.type_id_equal_to {
       // store 0u64
       hash = 0;
@@ -482,11 +494,18 @@ pub fn random_unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::Token
   let mut hashes = vec![];
 
   for (index, path) in ast.paths.iter().enumerate() {
-    let path_str = path_to_string(ast.ref_type[index], ast.is_dyn[index], path);
+    let mut path_str = path_to_string(ast.ref_type[index], ast.is_dyn[index], path);
     let (_prefix_path, path) = path_to_prefix_path(path);
     let type_token_stream = path_to_token_stream(ast.ref_type[index], ast.is_dyn[index], &path);
     // Hash the name and version to a u64
     names.push(path_str.clone());
+
+    if cfg!(feature = "erase_name") {
+      let mut hasher = std::hash::DefaultHasher::new();
+      std::hash::Hash::hash(&path_str, &mut hasher);
+      let path_str_hash = std::hash::Hasher::finish(&hasher);
+      path_str = format!("{}", path_str_hash);
+    }
     let hash: u64 = random();
     hashes.push(hash);
 

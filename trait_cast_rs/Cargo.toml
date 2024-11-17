@@ -19,7 +19,7 @@ downcast_unchecked = []
 alloc = []
 min_specialization = []
 const_sort = ["dep:const_sort_rs"]
-
+erase_name = ["trait_cast_impl_rs/erase_name"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
