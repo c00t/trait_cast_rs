@@ -48,9 +48,9 @@ use core::fmt;
 pub struct UniqueId(pub u64);
 
 impl fmt::Display for UniqueId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}", self.0)
+  }
 }
 
 /// A trait for providing a type id number.
@@ -72,4 +72,32 @@ pub trait UniqueTypeId {
 
   /// Returns the version for a type
   fn ty_version() -> (u64, u64, u64);
+}
+
+#[cfg(test)]
+mod tests {
+  use trait_cast_impl_rs::{unique_id, unique_id_without_version_hash};
+
+  use super::*;
+
+  #[test]
+  fn test_unique_id_typeid_equal_to() {
+    pub struct A1;
+    pub struct A2;
+    unique_id_without_version_hash! {
+      #[UniqueTypeIdVersion((0,1,0))]
+      A1;
+    }
+    unique_id_without_version_hash! {
+      #[UniqueTypeIdVersion((0,2,0))]
+      #[TypeIdEqualTo("A1")]
+      A2;
+    }
+
+    assert_eq!(<A1 as UniqueTypeId>::TYPE_NAME, "A1");
+    assert_eq!(<A2 as UniqueTypeId>::TYPE_NAME, "A2");
+    assert_eq!(<A1 as UniqueTypeId>::TYPE_ID, <A2 as UniqueTypeId>::TYPE_ID);
+    assert_eq!(<A1 as UniqueTypeId>::TYPE_VERSION, (0, 1, 0));
+    assert_eq!(<A2 as UniqueTypeId>::TYPE_VERSION, (0, 2, 0));
+  }
 }
