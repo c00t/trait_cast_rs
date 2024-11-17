@@ -42,6 +42,8 @@
 
 use core::fmt;
 
+use trait_cast_impl_rs::{unique_id, unique_id_without_version_hash};
+
 /// A strong type for type id.
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -74,6 +76,42 @@ pub trait UniqueTypeId {
   fn ty_version() -> (u64, u64, u64);
 }
 
+// implement the trait for primitive types in prelude
+unique_id_without_version_hash! {
+  u8;
+  u16;
+  u32;
+  u64;
+  i8;
+  i16;
+  i32;
+  i64;
+  f32;
+  f64;
+  bool;
+  char;
+  String;
+  str;
+}
+
+// implement the trait for optional types of primitive types in prelude
+unique_id_without_version_hash! {
+  Option<u8>;
+  Option<u16>;
+  Option<u32>;
+  Option<u64>;
+  Option<i8>;
+  Option<i16>;
+  Option<i32>;
+  Option<i64>;
+  Option<f32>;
+  Option<f64>;
+  Option<bool>;
+  Option<char>;
+  Option<String>;
+  Option<&str>;
+}
+
 #[cfg(test)]
 mod tests {
   use trait_cast_impl_rs::{unique_id, unique_id_without_version_hash};
@@ -99,5 +137,28 @@ mod tests {
     assert_eq!(<A1 as UniqueTypeId>::TYPE_ID, <A2 as UniqueTypeId>::TYPE_ID);
     assert_eq!(<A1 as UniqueTypeId>::TYPE_VERSION, (0, 1, 0));
     assert_eq!(<A2 as UniqueTypeId>::TYPE_VERSION, (0, 2, 0));
+  }
+
+  #[test]
+  fn test_unique_id_generic_ne() {
+    pub struct A<T> {
+      pub _t: T,
+    }
+    unique_id! {
+      A<u8>;
+      A<u16>;
+    }
+    assert_eq!(<A<u8> as UniqueTypeId>::TYPE_NAME, "A < u8 >");
+    assert_eq!(<A<u16> as UniqueTypeId>::TYPE_NAME, "A < u16 >");
+    assert_ne!(
+      <A<u8> as UniqueTypeId>::TYPE_ID,
+      <A<u16> as UniqueTypeId>::TYPE_ID
+    );
+    assert_eq!(
+      <A<u8> as UniqueTypeId>::TYPE_VERSION,
+      <A<u16> as UniqueTypeId>::TYPE_VERSION
+    );
+    assert_eq!(<A<u8> as UniqueTypeId>::TYPE_VERSION, (0, 0, 0));
+    assert_eq!(<A<u16> as UniqueTypeId>::TYPE_VERSION, (0, 0, 0));
   }
 }
