@@ -14,7 +14,7 @@ categories = ["no-std", "rust-patterns"]
 keywords = ["trait", "cast", "any", "upcast", "rtti"]
 
 [features]
-default = ["alloc"]
+default = ["alloc", "downcast_unchecked"]
 downcast_unchecked = []
 alloc = []
 min_specialization = []

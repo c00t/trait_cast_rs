@@ -27,7 +27,7 @@ macro_rules! make_trait_castable_decl {
       )*
       // Safety:
       // All returned `TraitcastTarget` are valid for $source
-      unsafe impl $crate::TraitcastableAny for $source {
+      unsafe impl $crate::TraitcastableAny for $source where Self: $crate::UniqueTypeId {
         fn traitcast_targets(&self) -> &[$crate::TraitcastTarget] {
           #[allow(clippy::unused_unit)]
           const TARGETS_LEN: usize = {
@@ -48,6 +48,9 @@ macro_rules! make_trait_castable_decl {
             targets
           };
           &TARGETS
+        }
+        fn type_id(&self) -> $crate::UniqueId {
+          $crate::UniqueId::from::<$source>()
         }
         $crate::maybe_impl_bin_search!();
       }
@@ -77,7 +80,7 @@ macro_rules! make_trait_castable_decl_random_self_id {
       )*
       // Safety:
       // All returned `TraitcastTarget` are valid for $source
-      unsafe impl $crate::TraitcastableAny for $source {
+      unsafe impl $crate::TraitcastableAny for $source where Self: $crate::UniqueTypeId {
         fn traitcast_targets(&self) -> &[$crate::TraitcastTarget] {
           #[allow(clippy::unused_unit)]
           const TARGETS_LEN: usize = {
@@ -99,9 +102,11 @@ macro_rules! make_trait_castable_decl_random_self_id {
           };
           &TARGETS
         }
+        fn type_id(&self) -> $crate::UniqueId {
+          $crate::UniqueId::from::<$source>()
+        }
         $crate::maybe_impl_bin_search!();
       }
-
       self::random_unique_id! {
         $source;
       }
@@ -127,7 +132,7 @@ macro_rules! make_trait_castable_decl_with_version {
       )*
       // Safety:
       // All returned `TraitcastTarget` are valid for $source
-      unsafe impl $crate::TraitcastableAny for $source {
+      unsafe impl $crate::TraitcastableAny for $source where Self: $crate::UniqueTypeId {
         fn traitcast_targets(&self) -> &[$crate::TraitcastTarget] {
           #[allow(clippy::unused_unit)]
           const TARGETS_LEN: usize = {
@@ -149,9 +154,11 @@ macro_rules! make_trait_castable_decl_with_version {
           };
           &TARGETS
         }
+        fn type_id(&self) -> $crate::UniqueId {
+          $crate::UniqueId::from::<$source>()
+        }
         $crate::maybe_impl_bin_search!();
       }
-
       self::unique_id! {
         #[UniqueTypeIdVersion(( $major, $major, $patch ))]
         $source;

@@ -33,7 +33,10 @@ trait Cat<T: Display + ?Sized> {
   fn meow(&self, speak: &T);
 }
 
-impl<T: Display + 'static> TraitcastableTo<dyn Dog> for HybridPet<T> {
+impl<T: Display + 'static> TraitcastableTo<dyn Dog> for HybridPet<T>
+where
+  Self: UniqueTypeId,
+{
   const METADATA: ::core::ptr::DynMetadata<dyn Dog> = {
     let ptr: *const HybridPet<T> =
       ::core::ptr::from_raw_parts(::core::ptr::null::<HybridPet<T>>(), ());
@@ -45,6 +48,8 @@ impl<T: Display + 'static> TraitcastableTo<dyn Dog> for HybridPet<T> {
 
 impl<T: Display + 'static, V: Display + 'static + ?Sized> TraitcastableTo<dyn Cat<V>>
   for HybridPet<T>
+where
+  Self: UniqueTypeId,
 {
   const METADATA: ::core::ptr::DynMetadata<dyn Cat<V>> = {
     let ptr: *const HybridPet<T> =
@@ -57,7 +62,10 @@ impl<T: Display + 'static, V: Display + 'static + ?Sized> TraitcastableTo<dyn Ca
 
 // The `TARGETS` slice can not be declared inside the `traitcast_targets` function.
 // The "use of generic parameter from outer function" rust limitation is the cause.
-impl<T: Display + 'static> HybridPet<T> {
+impl<T: Display + 'static> HybridPet<T>
+where
+  Self: UniqueTypeId,
+{
   const TARGETS: &[TraitcastTarget] = &[
     TraitcastTarget::from::<Self, dyn Dog>(),
     TraitcastTarget::from::<Self, dyn Cat<str>>(),
@@ -111,9 +119,15 @@ unique_id! {
 //   }
 // }
 
-unsafe impl<T: Display + 'static> TraitcastableAny for HybridPet<T> {
+unsafe impl<T: Display + 'static> TraitcastableAny for HybridPet<T>
+where
+  Self: UniqueTypeId,
+{
   fn traitcast_targets(&self) -> &[TraitcastTarget] {
     Self::TARGETS
+  }
+  fn type_id(&self) -> UniqueId {
+    UniqueId::from::<Self>()
   }
 }
 

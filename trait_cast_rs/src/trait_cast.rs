@@ -8,6 +8,8 @@ use core::{
 #[cfg(feature = "alloc")]
 use alloc::{boxed::Box, rc::Rc, sync::Arc};
 
+use crate::UniqueTypeId;
+
 /// This trait must be implemented on every concrete type for every trait that `TraitcastableAny`
 /// should be able to downcast to.
 ///
@@ -111,6 +113,9 @@ pub unsafe trait TraitcastableAny: Any {
     })
   }
 
+  /// Returns the [`crate::UniqueId`] of the concrete type.
+  fn type_id(&self) -> crate::UniqueId;
+
   // /// Returns the `TypeId` of the concrete type.
   // fn type_id(&self) -> TypeId {
   //   Any::type_id(self)
@@ -184,16 +189,40 @@ pub trait TraitcastableAnyInfraExt<Target: ?Sized + 'static>: Sized {
 // Safety:
 // Since `traitcast_targets` returns nothing this is always safe.
 // `find_traitcast_target` has the default implementations
-unsafe impl<T: 'static> TraitcastableAny for T {
+unsafe impl<T: 'static> TraitcastableAny for T
+where
+  T: crate::UniqueTypeId,
+{
   default fn traitcast_targets(&self) -> &[TraitcastTarget] {
     &[]
   }
-  default fn find_traitcast_target(&self, target: crate::UniqueTypeId) -> Option<&TraitcastTarget> {
+  default fn find_traitcast_target(
+    &self,
+    expected_version: (u64, u64, u64),
+    target: crate::UniqueId,
+  ) -> Option<&TraitcastTarget> {
+    let compatible_cmp = semver::Comparator {
+      op: semver::Op::Caret,
+      major: expected_version.0,
+      minor: Some(expected_version.1),
+      patch: Some(expected_version.2),
+      pre: semver::Prerelease::EMPTY,
+    };
     // Note: copied from above
-    self
-      .traitcast_targets()
-      .iter()
-      .find(|possible| possible.target_type_id == target)
+    self.traitcast_targets().iter().find(|possible| {
+      // println!("expected: id {:?}, version {:?}", target, expected_version);
+      // println!("possible: id {:?}, version {:?} name {}", possible.target_type_id, possible.target_type_version, possible.target_type_name);
+      possible.target_type_id == target
+        && (possible.target_type_version == expected_version
+          || compatible_cmp.matches(&semver::Version::new(
+            possible.target_type_version.0,
+            possible.target_type_version.1,
+            possible.target_type_version.2,
+          )))
+    })
+  }
+  default fn type_id(&self) -> crate::UniqueId {
+    crate::UniqueId::from::<T>()
   }
 }
 impl Debug for dyn TraitcastableAny {
@@ -264,32 +293,55 @@ macro_rules! implement_with_markers {
     }
     impl<Target: Sized + 'static + crate::UniqueTypeId + $($traits +)*> TraitcastableAnyInfra<Target> for dyn TraitcastableAny $(+ $traits)* {
       fn is(&self) -> bool {
-        <dyn Any>::is::<Target>(self)
+        let target = Target::TYPE_ID;
+        let concrete = TraitcastableAny::type_id(self);
+        target == concrete
       }
       fn can_be(&self) -> bool {
         <dyn TraitcastableAny as TraitcastableAnyInfra<Target>>::is(self)
       }
+      #[cfg(feature = "downcast_unchecked")]
       fn downcast_ref(&self) -> Option<&Target> {
-        <dyn Any>::downcast_ref::<Target>(self)
+        // Note: copy from core::any
+        if <dyn TraitcastableAny as TraitcastableAnyInfra<Target>>::is(self) {
+          // SAFETY: just checked whether we are pointing to the correct type, and we can rely on
+          // that check for memory safety because we have implemented Any for all types; no other
+          // impls can exist as they would conflict with our impl.
+          unsafe { Some(self.downcast_ref_unchecked()) }
+        } else {
+            None
+        }
       }
       #[cfg(feature = "downcast_unchecked")]
       unsafe fn downcast_ref_unchecked(&self) -> &Target {
-        <dyn Any>::downcast_ref_unchecked::<Target>(self)
+        // Note: copy from core::any
+        debug_assert!(<dyn TraitcastableAny as TraitcastableAnyInfra<Target>>::is(self));
+        // SAFETY: caller guarantees that Target is the correct type
+        unsafe { &*(self as *const dyn TraitcastableAny as *const Target) }
       }
-
+      #[cfg(feature = "downcast_unchecked")]
       fn downcast_mut(&mut self) -> Option<&mut Target> {
-        <dyn Any>::downcast_mut::<Target>(self)
+        if <dyn TraitcastableAny as TraitcastableAnyInfra<Target>>::is(self) {
+          // SAFETY: just checked whether we are pointing to the correct type, and we can rely on
+          // that check for memory safety because we have implemented Any for all types; no other
+          // impls can exist as they would conflict with our impl.
+          unsafe { Some(self.downcast_mut_unchecked()) }
+        } else {
+            None
+        }
       }
       #[cfg(feature = "downcast_unchecked")]
       unsafe fn downcast_mut_unchecked(&mut self) -> &mut Target {
-        <dyn Any>::downcast_mut_unchecked::<Target>(self)
+        debug_assert!(<dyn TraitcastableAny as TraitcastableAnyInfra<Target>>::is(self));
+        // SAFETY: caller guarantees that Target is the correct type
+        unsafe { &mut *(self as *mut dyn TraitcastableAny as *mut Target) }
       }
     }
   };
 }
 
 #[cfg(feature = "alloc")]
-impl<Src: TraitcastableAnyInfra<Target> + ?Sized, Target: ?Sized + 'static>
+impl<Src: TraitcastableAnyInfra<Target> + ?Sized + TraitcastableAny, Target: ?Sized + 'static>
   TraitcastableAnyInfraExt<Target> for Box<Src>
 {
   type Output = Box<Target>;
@@ -317,21 +369,27 @@ impl<Src: TraitcastableAnyInfra<Target> + ?Sized, Target: ?Sized + 'static>
 }
 
 #[cfg(feature = "alloc")]
-impl<Src: TraitcastableAnyInfra<Target>, Target: Sized + 'static> TraitcastableAnyInfraExt<Target>
-  for Box<Src>
+impl<Src: TraitcastableAnyInfra<Target> + TraitcastableAny, Target: Sized + 'static>
+  TraitcastableAnyInfraExt<Target> for Box<Src>
 {
+  #[cfg(feature = "downcast_unchecked")]
   fn downcast(self) -> Result<Self::Output, Self> {
-    #[cfg(feature = "downcast_unchecked")]
+    // #[cfg(feature = "downcast_unchecked")]
+    // if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
+    //   // SAFETY:
+    //   // We checked for dynamic type equality `is` in the previous if.
+    //   unsafe { Ok(<Box<dyn Any>>::downcast_unchecked(self)) }
+    // } else {
+    //   Err(self)
+    // }
+    // #[cfg(not(feature = "downcast_unchecked"))]
+    // if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
+    //   Ok(<Box<dyn Any>>::downcast::<Target>(self).unwrap())
+    // } else {
+    //   Err(self)
+    // }
     if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
-      // SAFETY:
-      // We checked for dynamic type equality `is` in the previous if.
-      unsafe { Ok(<Box<dyn Any>>::downcast_unchecked(self)) }
-    } else {
-      Err(self)
-    }
-    #[cfg(not(feature = "downcast_unchecked"))]
-    if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
-      Ok(<Box<dyn Any>>::downcast::<Target>(self).unwrap())
+      unsafe { Ok(<Box<Src> as TraitcastableAnyInfraExt<Target>>::downcast_unchecked(self)) }
     } else {
       Err(self)
     }
@@ -339,12 +397,17 @@ impl<Src: TraitcastableAnyInfra<Target>, Target: Sized + 'static> TraitcastableA
 
   #[cfg(feature = "downcast_unchecked")]
   unsafe fn downcast_unchecked(self) -> Self::Output {
-    <Box<dyn Any>>::downcast_unchecked::<Target>(self)
+    // <Box<dyn Any>>::downcast_unchecked::<Target>(self)
+    debug_assert!(TraitcastableAnyInfra::<Target>::is(self.as_ref()));
+    unsafe {
+      let raw: *mut dyn TraitcastableAny = Box::into_raw(self);
+      Box::from_raw(raw as *mut Target)
+    }
   }
 }
 
 #[cfg(feature = "alloc")]
-impl<Src: TraitcastableAnyInfra<Target> + ?Sized, Target: ?Sized + 'static>
+impl<Src: TraitcastableAnyInfra<Target> + ?Sized + TraitcastableAny, Target: ?Sized + 'static>
   TraitcastableAnyInfraExt<Target> for Rc<Src>
 {
   type Output = Rc<Target>;
@@ -372,21 +435,27 @@ impl<Src: TraitcastableAnyInfra<Target> + ?Sized, Target: ?Sized + 'static>
 }
 
 #[cfg(feature = "alloc")]
-impl<Src: TraitcastableAnyInfra<Target>, Target: Sized + 'static> TraitcastableAnyInfraExt<Target>
-  for Rc<Src>
+impl<Src: TraitcastableAnyInfra<Target> + TraitcastableAny, Target: Sized + 'static>
+  TraitcastableAnyInfraExt<Target> for Rc<Src>
 {
+  #[cfg(feature = "downcast_unchecked")]
   fn downcast(self) -> Result<Self::Output, Self> {
-    #[cfg(feature = "downcast_unchecked")]
+    // #[cfg(feature = "downcast_unchecked")]
+    // if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
+    //   // SAFETY:
+    //   // We checked for dynamic type equality `is` in the previous if.
+    //   unsafe { Ok(<Rc<dyn Any>>::downcast_unchecked(self)) }
+    // } else {
+    //   Err(self)
+    // }
+    // #[cfg(not(feature = "downcast_unchecked"))]
+    // if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
+    //   Ok(<Rc<dyn Any>>::downcast(self).unwrap())
+    // } else {
+    //   Err(self)
+    // }
     if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
-      // SAFETY:
-      // We checked for dynamic type equality `is` in the previous if.
-      unsafe { Ok(<Rc<dyn Any>>::downcast_unchecked(self)) }
-    } else {
-      Err(self)
-    }
-    #[cfg(not(feature = "downcast_unchecked"))]
-    if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
-      Ok(<Rc<dyn Any>>::downcast(self).unwrap())
+      unsafe { Ok(<Rc<Src> as TraitcastableAnyInfraExt<Target>>::downcast_unchecked(self)) }
     } else {
       Err(self)
     }
@@ -394,13 +463,18 @@ impl<Src: TraitcastableAnyInfra<Target>, Target: Sized + 'static> TraitcastableA
 
   #[cfg(feature = "downcast_unchecked")]
   unsafe fn downcast_unchecked(self) -> Self::Output {
-    <Rc<dyn Any>>::downcast_unchecked::<Target>(self)
+    // <Rc<dyn Any>>::downcast_unchecked::<Target>(self)
+    debug_assert!(TraitcastableAnyInfra::<Target>::is(self.as_ref()));
+    unsafe {
+      let raw: *const dyn TraitcastableAny = Rc::into_raw(self);
+      Rc::from_raw(raw as *const Target)
+    }
   }
 }
 
 #[cfg(feature = "alloc")]
 impl<
-    Src: TraitcastableAnyInfra<Target> + ?Sized + Send + Sync,
+    Src: TraitcastableAnyInfra<Target> + ?Sized + Send + Sync + TraitcastableAny,
     Target: ?Sized + 'static + Send + Sync,
   > TraitcastableAnyInfraExt<Target> for Arc<Src>
 {
@@ -429,21 +503,29 @@ impl<
 }
 
 #[cfg(feature = "alloc")]
-impl<Src: TraitcastableAnyInfra<Target> + Send + Sync, Target: Sized + 'static + Send + Sync>
-  TraitcastableAnyInfraExt<Target> for Arc<Src>
+impl<
+    Src: TraitcastableAnyInfra<Target> + Send + Sync + TraitcastableAny,
+    Target: Sized + 'static + Send + Sync,
+  > TraitcastableAnyInfraExt<Target> for Arc<Src>
 {
+  #[cfg(feature = "downcast_unchecked")]
   fn downcast(self) -> Result<Self::Output, Self> {
-    #[cfg(feature = "downcast_unchecked")]
+    // #[cfg(feature = "downcast_unchecked")]
+    // if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
+    //   // SAFETY:
+    //   // We checked for dynamic type equality `is` in the previous if.
+    //   unsafe { Ok(<Arc<dyn Any + Send + Sync>>::downcast_unchecked(self)) }
+    // } else {
+    //   Err(self)
+    // }
+    // #[cfg(not(feature = "downcast_unchecked"))]
+    // if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
+    //   Ok(<Arc<dyn Any + Send + Sync>>::downcast(self).unwrap())
+    // } else {
+    //   Err(self)
+    // }
     if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
-      // SAFETY:
-      // We checked for dynamic type equality `is` in the previous if.
-      unsafe { Ok(<Arc<dyn Any + Send + Sync>>::downcast_unchecked(self)) }
-    } else {
-      Err(self)
-    }
-    #[cfg(not(feature = "downcast_unchecked"))]
-    if TraitcastableAnyInfra::<Target>::is(self.as_ref()) {
-      Ok(<Arc<dyn Any + Send + Sync>>::downcast(self).unwrap())
+      unsafe { Ok(<Arc<Src> as TraitcastableAnyInfraExt<Target>>::downcast_unchecked(self)) }
     } else {
       Err(self)
     }
@@ -451,7 +533,12 @@ impl<Src: TraitcastableAnyInfra<Target> + Send + Sync, Target: Sized + 'static +
 
   #[cfg(feature = "downcast_unchecked")]
   unsafe fn downcast_unchecked(self) -> Self::Output {
-    <Arc<dyn Any + Send + Sync>>::downcast_unchecked::<Target>(self)
+    // <Arc<dyn Any + Send + Sync>>::downcast_unchecked::<Target>(self)
+    debug_assert!(TraitcastableAnyInfra::<Target>::is(self.as_ref()));
+    unsafe {
+      let raw: *const dyn TraitcastableAny = Arc::into_raw(self);
+      Arc::from_raw(raw as *const Target)
+    }
   }
 }
 

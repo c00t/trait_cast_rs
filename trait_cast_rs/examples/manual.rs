@@ -30,13 +30,19 @@ impl TraitcastableTo<dyn Cat> for HybridPet {
   };
 }
 
-unsafe impl TraitcastableAny for HybridPet {
+unsafe impl TraitcastableAny for HybridPet
+where
+  Self: UniqueTypeId,
+{
   fn traitcast_targets(&self) -> &[TraitcastTarget] {
     const TARGETS: &[TraitcastTarget] = &[
       TraitcastTarget::from::<HybridPet, dyn Dog>(),
       TraitcastTarget::from::<HybridPet, dyn Cat>(),
     ];
     TARGETS
+  }
+  fn type_id(&self) -> UniqueId {
+    UniqueId::from::<Self>()
   }
 }
 

@@ -1,11 +1,13 @@
-#![cfg_attr(feature = "min_specialization", feature(min_specialization))]
-#![cfg_attr(feature = "downcast_unchecked", feature(downcast_unchecked))]
+// #![cfg_attr(feature = "min_specialization", feature(min_specialization))]
+// #![cfg_attr(feature = "downcast_unchecked", feature(downcast_unchecked))]
 #![cfg_attr(feature = "const_sort", feature(const_trait_impl, const_mut_refs))]
 #![feature(ptr_metadata)]
+#![feature(downcast_unchecked)]
+#![feature(min_specialization)]
 
 use trait_cast_rs::{
   make_trait_castable, make_trait_castable_decl, make_trait_castable_decl_with_version,
-  TraitcastableAny, TraitcastableAnyInfra,
+  TraitcastableAny, TraitcastableAnyInfra, TraitcastableAnyInfraExt,
 };
 
 #[make_trait_castable(Dog, Cat)]
@@ -65,4 +67,7 @@ fn main() {
 
   let cast_back: &HybridPet = castable_pet.downcast_ref().unwrap();
   cast_back.greet();
+
+  let box_pet: Box<HybridPet> = castable_pet.downcast().unwrap();
+  box_pet.greet();
 }

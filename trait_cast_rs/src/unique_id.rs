@@ -49,6 +49,13 @@ use trait_cast_impl_rs::{unique_id, unique_id_without_version_hash};
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct UniqueId(pub u64);
 
+impl UniqueId {
+  /// Get UniqueId of a type
+  pub const fn from<Target: 'static + ?Sized + UniqueTypeId>() -> Self {
+    Target::TYPE_ID
+  }
+}
+
 impl fmt::Display for UniqueId {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)

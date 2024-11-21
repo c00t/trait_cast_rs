@@ -61,6 +61,8 @@ fn main() {
 
   let castable_pet: Box<dyn TraitcastableAny> = pet;
 
+  assert!(<dyn TraitcastableAny as TraitcastableAnyInfra<HybridPet>>::is(&*castable_pet));
+
   let as_dog: &dyn Dog<i32> = castable_pet.downcast_ref().unwrap();
   as_dog.bark();
 
