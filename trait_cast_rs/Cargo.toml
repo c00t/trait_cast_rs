@@ -26,3 +26,5 @@ erase_name = ["trait_cast_impl_rs/erase_name"]
 trait_cast_impl_rs = { path = "../trait_cast_impl_rs", version = "0.2.2" }
 const_sort_rs = { version = "0.3.3", optional = true }
 semver = "1.0.23"
+fixedstr = { path = "../../../../../fixedstr", features = ["fstr"] }
+rapidhash = "1.1.0"

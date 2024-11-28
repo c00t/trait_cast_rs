@@ -11,6 +11,7 @@
   min_specialization, // Needed to unify the interface between downcast and traitcast (could be avoided with !Trait bounds or trait generics)
   doc_cfg             // For nicer Docs
 )]
+#![feature(str_from_raw_parts)]
 #![feature(ptr_metadata)]
 #![cfg_attr(feature = "downcast_unchecked", feature(downcast_unchecked))]
 #![cfg_attr(feature = "const_sort", feature(const_trait_impl))]

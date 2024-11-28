@@ -30,6 +30,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "fixedstr"
+version = "0.5.8"
+
+[[package]]
 name = "getrandom"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -104,6 +108,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "rapidhash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c19d352e507dbbab7e95a05a98e40bcb2feb5c333c3644cd1ee65acdb819164"
+
+[[package]]
 name = "semver"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -127,6 +137,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rand",
+ "rapidhash",
  "syn",
  "venial",
 ]
@@ -136,6 +147,8 @@ name = "trait_cast_rs"
 version = "0.2.4"
 dependencies = [
  "const_sort_rs",
+ "fixedstr",
+ "rapidhash",
  "semver",
  "trait_cast_impl_rs",
 ]
