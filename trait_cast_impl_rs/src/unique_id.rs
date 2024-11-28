@@ -376,7 +376,7 @@ pub fn unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
       let mut hasher = std::hash::DefaultHasher::new();
       std::hash::Hash::hash(&path_str, &mut hasher);
       let path_str_hash = std::hash::Hasher::finish(&hasher);
-      path_str = format!("{}", path_str_hash);
+      path_str = format!("0x{:x}", path_str_hash);
     }
     if let Some(_) = ast.type_id_equal_to {
       // store 0u64
@@ -487,7 +487,7 @@ pub fn unique_id_dyn_without_version_hash_in_type(
       let mut hasher = std::hash::DefaultHasher::new();
       std::hash::Hash::hash(&path_str, &mut hasher);
       let path_str_hash = std::hash::Hasher::finish(&hasher);
-      path_str = format!("{}", path_str_hash);
+      path_str = format!("0x{:x}", path_str_hash);
     }
     if let Some(_) = ast.type_id_equal_to {
       // store 0u64
@@ -586,7 +586,7 @@ pub fn random_unique_id_dyn(input: proc_macro::TokenStream) -> proc_macro::Token
       let mut hasher = std::hash::DefaultHasher::new();
       std::hash::Hash::hash(&path_str, &mut hasher);
       let path_str_hash = std::hash::Hasher::finish(&hasher);
-      path_str = format!("{}", path_str_hash);
+      path_str = format!("0x{:x}", path_str_hash);
     }
     let hash: u64 = random();
     hashes.push(hash);

@@ -78,6 +78,11 @@ impl fmt::Display for UniqueId {
 /// A trait for providing a type id number.
 pub trait UniqueTypeId {
   /// The type name defined by the user, more unique and stable name than the [`core::any::type_name`]
+  ///
+  /// When enabled feature `erase_name`, the type name will be a hex string of the hash of the original type name if it's a primitive type without generic.
+  /// Otherwise, it will be the original type name.
+  ///
+  /// You should implement this trait as specific as possible. Because that the generic implement will make your binary size larger.
   const TYPE_NAME: &'static str;
   /// A unique id for a type, used by trait_cast to cast trait objects.
   /// If not equal, trait_cast will fail.
