@@ -261,6 +261,66 @@ macro_rules! implement_tuple_unique_id {
 
 implement_tuple_unique_id!();
 
+/// Internal macro to implement UniqueTypeId for fixed size arrays.
+macro_rules! implement_array_unique_id {
+  () => {
+      implement_array_unique_id!(@internal 0);
+      implement_array_unique_id!(@internal 1);
+      implement_array_unique_id!(@internal 2);
+      implement_array_unique_id!(@internal 3);
+      implement_array_unique_id!(@internal 4);
+      implement_array_unique_id!(@internal 5);
+      implement_array_unique_id!(@internal 6);
+      implement_array_unique_id!(@internal 7);
+      implement_array_unique_id!(@internal 8);
+      implement_array_unique_id!(@internal 9);
+      implement_array_unique_id!(@internal 10);
+      implement_array_unique_id!(@internal 11);
+      implement_array_unique_id!(@internal 12);
+      implement_array_unique_id!(@internal 13);
+      implement_array_unique_id!(@internal 14);
+      implement_array_unique_id!(@internal 15);
+      implement_array_unique_id!(@internal 16);
+      implement_array_unique_id!(@internal 17);
+      implement_array_unique_id!(@internal 18);
+      implement_array_unique_id!(@internal 19);
+      implement_array_unique_id!(@internal 20);
+      implement_array_unique_id!(@internal 21);
+      implement_array_unique_id!(@internal 22);
+      implement_array_unique_id!(@internal 23);
+      implement_array_unique_id!(@internal 24);
+      implement_array_unique_id!(@internal 25);
+      implement_array_unique_id!(@internal 26);
+      implement_array_unique_id!(@internal 27);
+      implement_array_unique_id!(@internal 28);
+      implement_array_unique_id!(@internal 29);
+      implement_array_unique_id!(@internal 30);
+      implement_array_unique_id!(@internal 31);
+      implement_array_unique_id!(@internal 32);
+  };
+
+  (@internal $n:tt) => {
+      impl<T: UniqueTypeId> UniqueTypeId for [T; $n]
+      where
+          Self: FixedTypeName,
+      {
+          const TYPE_NAME: &'static str = fstr_to_str(&Self::TYPE_NAME_FSTR);
+      }
+
+      impl<T: UniqueTypeId> FixedTypeName for [T; $n] {
+          const RAW_SLICE: &[&str] = &[
+              "[",
+              T::TYPE_NAME,
+              ";",
+              stringify!($n),
+              "]"
+          ];
+      }
+  };
+}
+
+implement_array_unique_id!();
+
 // implement the trait for optional types of primitive types in prelude
 unique_id_without_version_hash! {
   Option<u8>;
@@ -354,5 +414,15 @@ mod tests {
     );
 
     assert_eq!(<((), String) as UniqueTypeId>::TYPE_NAME, "((),String)");
+
+    assert_eq!(<[u8; 10] as UniqueTypeId>::TYPE_NAME, "[u8;10]");
+    assert_eq!(
+      <[(u8, u32); 20] as UniqueTypeId>::TYPE_NAME,
+      "[(u8,u32);20]"
+    );
+    assert_ne!(
+      <[u8; 10] as UniqueTypeId>::TYPE_ID,
+      <[(u8, u32); 20] as UniqueTypeId>::TYPE_ID
+    );
   }
 }
