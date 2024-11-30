@@ -35,7 +35,7 @@ trait Cat<T: Display + ?Sized> {
 
 impl<T: Display + 'static> TraitcastableTo<dyn Dog> for HybridPet<T>
 where
-  Self: UniqueTypeId,
+  Self: FixedTypeId,
 {
   const METADATA: ::core::ptr::DynMetadata<dyn Dog> = {
     let ptr: *const HybridPet<T> =
@@ -49,7 +49,7 @@ where
 impl<T: Display + 'static, V: Display + 'static + ?Sized> TraitcastableTo<dyn Cat<V>>
   for HybridPet<T>
 where
-  Self: UniqueTypeId,
+  Self: FixedTypeId,
 {
   const METADATA: ::core::ptr::DynMetadata<dyn Cat<V>> = {
     let ptr: *const HybridPet<T> =
@@ -64,7 +64,7 @@ where
 // The "use of generic parameter from outer function" rust limitation is the cause.
 impl<T: Display + 'static> HybridPet<T>
 where
-  Self: UniqueTypeId,
+  Self: FixedTypeId,
 {
   const TARGETS: &[TraitcastTarget] = &[
     TraitcastTarget::from::<Self, dyn Dog>(),
@@ -80,17 +80,17 @@ where
 //   }
 // }
 
-use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+use fixed_type_id::{self as __fixed_type_id, fixed_type_id, FixedId, FixedTypeId, FixedVersion};
 
-unique_id! {
+fixed_type_id! {
   dyn Dog
 }
 
-unique_id! {
+fixed_type_id! {
   dyn Cat<String>
 }
 
-unique_id! {
+fixed_type_id! {
   dyn Cat<str>
 }
 
@@ -101,7 +101,7 @@ unique_id! {
 //   }
 // }
 
-unique_id! {
+fixed_type_id! {
   HybridPet<String>
 }
 
@@ -121,13 +121,13 @@ unique_id! {
 
 unsafe impl<T: Display + 'static> TraitcastableAny for HybridPet<T>
 where
-  Self: UniqueTypeId,
+  Self: FixedTypeId,
 {
   fn traitcast_targets(&self) -> &[TraitcastTarget] {
     Self::TARGETS
   }
-  fn type_id(&self) -> UniqueId {
-    UniqueId::from::<Self>()
+  fn type_id(&self) -> FixedId {
+    FixedId::from::<Self>()
   }
 }
 

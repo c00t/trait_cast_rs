@@ -20,13 +20,13 @@ make_trait_castable_decl! {
   // Sunflower => (Flower, Plant)
 }
 
-use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+use fixed_type_id::{self as __fixed_type_id, fixed_type_id, FixedId, FixedTypeId, FixedVersion};
 
-unique_id! {
+fixed_type_id! {
   dyn Dog
 }
 
-unique_id! {
+fixed_type_id! {
   dyn Cat
 }
 

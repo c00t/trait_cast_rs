@@ -30,8 +30,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "fixedstr"
+name = "fixed-type-id"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3564a460a60fe42357a69801ba75b23678260cf2d1684a1cf9ec09a737b234f8"
+dependencies = [
+ "fixed-type-id-macros",
+ "fixedstr-ext",
+ "rapidhash",
+ "semver",
+]
+
+[[package]]
+name = "fixed-type-id-macros"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c1d4238ad5ef013ae9ed3cede90789239294fba9d4246cfc860223da9425b77"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "rand",
+ "rapidhash",
+ "syn",
+]
+
+[[package]]
+name = "fixedstr-ext"
 version = "0.5.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4ddfe511d23a88cf43e1aaace87a038bdf4d9a8790a715080c40adfcb59aaef"
 
 [[package]]
 name = "getrandom"
@@ -136,8 +163,6 @@ version = "0.2.2"
 dependencies = [
  "proc-macro2",
  "quote",
- "rand",
- "rapidhash",
  "syn",
  "venial",
 ]
@@ -147,8 +172,7 @@ name = "trait_cast_rs"
 version = "0.2.4"
 dependencies = [
  "const_sort_rs",
- "fixedstr",
- "rapidhash",
+ "fixed-type-id",
  "semver",
  "trait_cast_impl_rs",
 ]

@@ -11,17 +11,17 @@ make_trait_castable_decl! {
   HybridPet => (Dog<i32>, Dog<TestStruct<::std::primitive::i32>>, Cat<u128, u32>),
 }
 
-use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+use fixed_type_id::{self as __fixed_type_id, fixed_type_id, FixedId, FixedTypeId, FixedVersion};
 
-unique_id! {
+fixed_type_id! {
   dyn Dog<i32>
 }
 
-unique_id! {
+fixed_type_id! {
   dyn Dog<TestStruct<::std::primitive::i32>>
 }
 
-unique_id! {
+fixed_type_id! {
   dyn Cat<u128, u32>
 }
 

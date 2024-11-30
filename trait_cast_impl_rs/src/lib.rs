@@ -8,7 +8,6 @@ use proc_macro::TokenStream as TokenStream1;
 use proc_macro2::TokenStream;
 use quote::quote;
 use venial::{parse_declaration, Declaration, Error};
-mod unique_id;
 
 /// Attribute macro implementing `TraitcastableAny` for a struct, enum or union.
 ///
@@ -120,68 +119,4 @@ pub fn make_trait_castable_random_self_id(args: TokenStream1, input: TokenStream
     make_trait_castable_decl_random_self_id! {
     #item_name => (#args)
   }))
-}
-
-/// Macro to generate a unique id for a trait object type or a general type.
-///
-/// This macro generates unique type IDs that can be used for type identification and casting.
-/// It supports both trait objects and concrete types, with optional version or file-based uniqueness.
-///
-/// # Examples
-///
-/// Basic usage with trait objects:
-/// ```ignore,no_compile
-/// use trait_cast_rs::unique_id;
-///
-/// unique_id! {
-///     dyn MyTrait
-/// }
-/// ```
-///
-/// With version-based uniqueness (commonly used pattern):
-/// ```ignore,no_compile
-/// use trait_cast_rs::unique_id;
-///
-/// unique_id! {
-///     #[UniqueTypeIdVersion((0,1,0))]
-///     dyn my_crate::api::MyTrait
-/// }
-/// ```
-///
-/// With file-based uniqueness and filename:
-/// ```ignore,no_compile
-/// use trait_cast_rs::unique_id;
-///
-/// unique_id! {
-///     #[UniqueTypeIdFile("ids.toml")]
-///     dyn MyTrait
-/// }
-/// ```
-///
-/// Real-world example from APIs:
-/// ```ignore,no_compile
-/// use trait_cast_rs::unique_id;
-///
-/// unique_id! {
-///     #[UniqueTypeIdVersion((1,0,0))]
-///     dyn bubble_core::api::my_api::MyApi
-/// }
-/// ```
-#[proc_macro]
-pub fn unique_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-  unique_id::unique_id_dyn(input)
-}
-
-/// Macro to generate a unique id for a trait object type without version.
-///
-/// For types which version is managed externally, or want to use semantic versioning.
-#[proc_macro]
-pub fn unique_id_without_version_hash(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-  unique_id::unique_id_dyn_without_version_hash_in_type(input)
-}
-
-/// Macro to generate a random unique id.
-#[proc_macro]
-pub fn random_unique_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-  unique_id::random_unique_id_dyn(input)
 }

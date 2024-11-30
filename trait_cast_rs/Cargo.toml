@@ -19,12 +19,10 @@ downcast_unchecked = []
 alloc = []
 min_specialization = []
 const_sort = ["dep:const_sort_rs"]
-erase_name = ["trait_cast_impl_rs/erase_name"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 trait_cast_impl_rs = { path = "../trait_cast_impl_rs", version = "0.2.2" }
 const_sort_rs = { version = "0.3.3", optional = true }
 semver = "1.0.23"
-fixedstr = { path = "../../../../../fixedstr", features = ["fstr"] }
-rapidhash = "1.1.0"
+fixed-type-id = { version = "0.1.0" }

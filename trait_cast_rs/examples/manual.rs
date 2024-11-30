@@ -32,7 +32,7 @@ impl TraitcastableTo<dyn Cat> for HybridPet {
 
 unsafe impl TraitcastableAny for HybridPet
 where
-  Self: UniqueTypeId,
+  Self: FixedTypeId,
 {
   fn traitcast_targets(&self) -> &[TraitcastTarget] {
     const TARGETS: &[TraitcastTarget] = &[
@@ -41,22 +41,22 @@ where
     ];
     TARGETS
   }
-  fn type_id(&self) -> UniqueId {
-    UniqueId::from::<Self>()
+  fn type_id(&self) -> FixedId {
+    FixedId::from::<Self>()
   }
 }
 
-unique_id! {
-  #[UniqueTypeIdFile("types.toml")]
-  #[UniqueTypeIdVersion((0,2,0))]
+fixed_type_id! {
+  #[FixedTypeIdFile("types.toml")]
+  #[FixedTypeIdVersion((0,2,0))]
   dyn Dog
 }
 
-unique_id! {
+fixed_type_id! {
   dyn Cat
 }
 
-unique_id! {
+fixed_type_id! {
   HybridPet
 }
 
@@ -85,9 +85,9 @@ trait Cat: TraitcastableAny {
 }
 trait Mouse {}
 
-use trait_cast_rs::{unique_id, UniqueId, UniqueTypeId};
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
 
-unique_id! {
+fixed_type_id! {
   dyn Mouse
 }
 

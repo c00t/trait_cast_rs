@@ -12,6 +12,7 @@
   doc_cfg             // For nicer Docs
 )]
 #![feature(str_from_raw_parts)]
+#![feature(generic_const_exprs)]
 #![feature(ptr_metadata)]
 #![cfg_attr(feature = "downcast_unchecked", feature(downcast_unchecked))]
 #![cfg_attr(feature = "const_sort", feature(const_trait_impl))]
@@ -59,8 +60,9 @@ use trait_cast_rs::{
 mod s {
   use trait_cast_rs::{
     make_trait_castable, TraitcastableAny, TraitcastableAnyInfra, TraitcastableAnyInfraExt,
-    make_trait_castable_decl, unique_id, UniqueTypeId, UniqueId
+    make_trait_castable_decl
   };
+  use fixed_type_id::{FixedId, FixedTypeId, FixedVersion, fixed_type_id, self as __fixed_type_id};
 
   #[make_trait_castable(Print)]
   pub struct Source(pub i32);
@@ -73,7 +75,7 @@ mod s {
     }
   }
 
-  unique_id! {
+  fixed_type_id! {
     dyn Print
   }
 }
@@ -213,9 +215,7 @@ TODO: Remove this section once our last update is 6 years old.
 extern crate alloc;
 
 mod trait_cast;
-mod unique_id;
 pub use trait_cast::*;
-pub use unique_id::*;
 
 mod decl_macro;
 
@@ -224,8 +224,6 @@ mod decl_macro;
 pub use const_sort_rs::ConstSliceSortExt;
 
 pub use trait_cast_impl_rs::{make_trait_castable, make_trait_castable_random_self_id};
-
-pub use trait_cast_impl_rs::{random_unique_id, unique_id, unique_id_without_version_hash};
 
 #[cfg(test)]
 mod test;
