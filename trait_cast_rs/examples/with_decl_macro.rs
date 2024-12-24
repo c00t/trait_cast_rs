@@ -20,7 +20,7 @@ make_trait_castable_decl! {
   // Sunflower => (Flower, Plant)
 }
 
-use fixed_type_id::{self as __fixed_type_id, fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::prelude::*;
 
 fixed_type_id! {
   dyn Dog

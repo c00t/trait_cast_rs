@@ -8,7 +8,7 @@ use core::{
 #[cfg(feature = "alloc")]
 use alloc::{boxed::Box, rc::Rc, sync::Arc};
 
-use fixed_type_id::{self as __fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::prelude::*;
 
 /// This trait must be implemented on every concrete type for every trait that `TraitcastableAny`
 /// should be able to downcast to.

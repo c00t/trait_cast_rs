@@ -47,8 +47,8 @@ where
 }
 
 fixed_type_id! {
-  #[FixedTypeIdFile("types.toml")]
-  #[FixedTypeIdVersion((0,2,0))]
+  #[store_in_file("types.toml")]
+  #[version((0,2,0))]
   dyn Dog
 }
 
@@ -85,7 +85,7 @@ trait Cat: TraitcastableAny {
 }
 trait Mouse {}
 
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::prelude::*;
 
 fixed_type_id! {
   dyn Mouse

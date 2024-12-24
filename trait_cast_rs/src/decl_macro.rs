@@ -27,7 +27,7 @@ macro_rules! make_trait_castable_decl {
       )*
       // Safety:
       // All returned `TraitcastTarget` are valid for $source
-      unsafe impl $crate::TraitcastableAny for $source where Self: __fixed_type_id::FixedTypeId {
+      unsafe impl $crate::TraitcastableAny for $source where Self: self::FixedTypeId {
         fn traitcast_targets(&self) -> &[$crate::TraitcastTarget] {
           #[allow(clippy::unused_unit)]
           const TARGETS_LEN: usize = {
@@ -49,13 +49,13 @@ macro_rules! make_trait_castable_decl {
           };
           &TARGETS
         }
-        fn type_id(&self) -> __fixed_type_id::FixedId {
-          __fixed_type_id::FixedId::from::<$source>()
+        fn type_id(&self) -> self::FixedId {
+          self::FixedId::from::<$source>()
         }
         $crate::maybe_impl_bin_search!();
       }
 
-      __fixed_type_id::fixed_type_id! {
+      self::fixed_type_id! {
         $source;
       }
     )+
@@ -80,7 +80,7 @@ macro_rules! make_trait_castable_decl_random_self_id {
       )*
       // Safety:
       // All returned `TraitcastTarget` are valid for $source
-      unsafe impl $crate::TraitcastableAny for $source where Self: __fixed_type_id::FixedTypeId {
+      unsafe impl $crate::TraitcastableAny for $source where Self: self::FixedTypeId {
         fn traitcast_targets(&self) -> &[$crate::TraitcastTarget] {
           #[allow(clippy::unused_unit)]
           const TARGETS_LEN: usize = {
@@ -102,13 +102,14 @@ macro_rules! make_trait_castable_decl_random_self_id {
           };
           &TARGETS
         }
-        fn type_id(&self) -> __fixed_type_id::FixedId {
-          __fixed_type_id::FixedId::from::<$source>()
+        fn type_id(&self) -> self::FixedId {
+          self::FixedId::from::<$source>()
         }
         $crate::maybe_impl_bin_search!();
       }
 
-      __fixed_type_id::random_fixed_type_id! {
+      self::fixed_type_id! {
+        #[random_id]
         $source;
       }
     )+
@@ -133,7 +134,7 @@ macro_rules! make_trait_castable_decl_with_version {
       )*
       // Safety:
       // All returned `TraitcastTarget` are valid for $source
-      unsafe impl $crate::TraitcastableAny for $source where Self: __fixed_type_id::FixedTypeId {
+      unsafe impl $crate::TraitcastableAny for $source where Self: self::FixedTypeId {
         fn traitcast_targets(&self) -> &[$crate::TraitcastTarget] {
           #[allow(clippy::unused_unit)]
           const TARGETS_LEN: usize = {
@@ -155,13 +156,13 @@ macro_rules! make_trait_castable_decl_with_version {
           };
           &TARGETS
         }
-        fn type_id(&self) -> __fixed_type_id::FixedId {
-          __fixed_type_id::FixedId::from::<$source>()
+        fn type_id(&self) -> self::FixedId {
+          self::FixedId::from::<$source>()
         }
         $crate::maybe_impl_bin_search!();
       }
-      __fixed_type_id::fixed_type_id! {
-        #[FixedTypeIdVersion(( $major, $major, $patch ))]
+      self::fixed_type_id! {
+        #[version(( $major, $major, $patch ))]
         $source;
       }
     )+

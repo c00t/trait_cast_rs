@@ -62,7 +62,7 @@ mod s {
     make_trait_castable, TraitcastableAny, TraitcastableAnyInfra, TraitcastableAnyInfraExt,
     make_trait_castable_decl
   };
-  use fixed_type_id::{FixedId, FixedTypeId, FixedVersion, fixed_type_id, self as __fixed_type_id};
+  use fixed_type_id::prelude::*;
 
   #[make_trait_castable(Print)]
   pub struct Source(pub i32);

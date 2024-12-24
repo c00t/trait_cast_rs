@@ -1,5 +1,6 @@
 use crate::make_trait_castable_decl;
-use fixed_type_id::{self as __fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::prelude::*;
+use fixed_type_id::FixedTypeId;
 
 const fn _test_empty_trait_cast_targets() {
   struct Woof {}
@@ -10,13 +11,13 @@ const fn _test_empty_trait_cast_targets() {
 }
 
 mod m {
-  use fixed_type_id::{self as __fixed_type_id, fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+  use fixed_type_id::prelude::*;
   pub trait Q {}
   pub trait W {}
   pub trait E<T> {}
   fixed_type_id! {
-      #[FixedTypeIdVersion((0,1,0))] // default to (0,0,0)
-      #[FixedTypeIdFile("types.toml")] // no default
+      #[version((0,1,0))] // default to (0,0,0)
+      #[store_in_file("types.toml")] // no default
       dyn trait_cast_rs::m::Q;
       dyn W;
       dyn E<u8>;
